@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Europe Relocation Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; overflow: hidden; height: 100vh; }
+        #map { width: 100vw; height: 100vh; }
+
+        /* Markers */
+        .map-marker {
+            width: 18px; height: 18px; background: #fff; border: 3px solid #6366f1;
+            border-radius: 50%; cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 0 0 rgba(99,102,241,0.4); position: relative;
+        }
+        .map-marker:hover, .map-marker.active {
+            transform: scale(1.3); box-shadow: 0 0 0 8px rgba(99,102,241,0.15);
+            background: #6366f1; border-color: #fff;
+        }
+        .marker-tooltip {
+            position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+            background: rgba(15,15,20,0.92); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+            padding: 8px 14px; white-space: nowrap; pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .map-marker:hover .marker-tooltip { opacity: 1; }
+        .marker-tooltip-city { font-size: 13px; font-weight: 600; color: #fff; }
+        .marker-tooltip-country { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+        .marker-tooltip-rank { font-size: 10px; color: #a5b4fc; margin-top: 2px; font-weight: 600; }
+
+        /* Right info panel */
+        .info-panel {
+            position: fixed; top: 0; right: -500px; width: 500px; height: 100vh;
+            background: rgba(15,15,20,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border-left: 1px solid rgba(255,255,255,0.06);
+            z-index: 1000; transition: right 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .info-panel.open { right: 0; }
+        .info-panel::-webkit-scrollbar { width: 4px; }
+        .info-panel::-webkit-scrollbar-track { background: transparent; }
+        .info-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+        .panel-header {
+            position: sticky; top: 0; z-index: 10; padding: 28px 32px 20px;
+            background: rgba(15,15,20,0.95); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .panel-close {
+            position: absolute; top: 20px; right: 24px; width: 32px; height: 32px; border: none;
+            background: rgba(255,255,255,0.06); border-radius: 8px; color: rgba(255,255,255,0.5);
+            font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .panel-flag { font-size: 36px; margin-bottom: 8px; }
+        .panel-city { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
+        .panel-country { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+        .panel-rank-badge {
+            display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 12px;
+            background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 20px; font-size: 12px; font-weight: 600; color: #a5b4fc;
+        }
+        .panel-body { padding: 8px 32px 40px; }
+
+        /* Sections */
+        .section { margin-top: 28px; }
+        .section-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }
+        .section-text { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.7); font-weight: 300; }
+        .divider { height: 1px; background: rgba(255,255,255,0.05); margin: 28px 0 0; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 16px; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+        .stat-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; font-weight: 500; }
+
+        .religion-bars { display: flex; flex-direction: column; gap: 10px; }
+        .religion-row { display: flex; align-items: center; gap: 12px; }
+        .religion-name { font-size: 13px; color: rgba(255,255,255,0.6); width: 110px; flex-shrink: 0; }
+        .religion-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+        .religion-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+        .religion-pct { font-size: 13px; color: rgba(255,255,255,0.5); width: 38px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .pros-cons-column h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+        .pros-cons-column.pros h4 { color: #4ade80; }
+        .pros-cons-column.cons h4 { color: #f87171; }
+        .pros-cons-column ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .pros-cons-column li { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.6); padding-left: 14px; position: relative; font-weight: 300; }
+        .pros-cons-column.pros li::before { content: '+'; position: absolute; left: 0; color: #4ade80; font-weight: 600; }
+        .pros-cons-column.cons li::before { content: '−'; position: absolute; left: 0; color: #f87171; font-weight: 600; }
+
+        .checklist { display: flex; flex-direction: column; gap: 8px; }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; font-weight: 300; }
+        .checklist-icon { width: 18px; height: 18px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 5px; flex-shrink: 0; margin-top: 1px; }
+
+        .cost-rows { display: flex; flex-direction: column; gap: 8px; }
+        .cost-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .cost-row-label { font-size: 13px; color: rgba(255,255,255,0.55); }
+        .cost-row-value { font-size: 14px; color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        /* Title bar */
+        .title-bar {
+            position: fixed; top: 24px; left: 24px; z-index: 999;
+            background: rgba(15,15,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 22px;
+        }
+        .title-bar h1 { font-size: 16px; font-weight: 600; color: #fff; letter-spacing: -0.2px; }
+        .title-bar p { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+        /* Compare button */
+        .compare-btn {
+            position: fixed; top: 100px; left: 24px; z-index: 999;
+            background: rgba(99,102,241,0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 12px 20px;
+            color: #a5b4fc; font-size: 14px; font-weight: 600; cursor: pointer;
+            font-family: inherit; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+        .compare-btn:hover { background: rgba(99,102,241,0.25); color: #fff; }
+        .compare-btn svg { width: 16px; height: 16px; }
+
+        /* Compare drawer (left side) */
+        .compare-drawer {
+            position: fixed; top: 0; left: -520px; width: 520px; height: 100vh;
+            background: rgba(15,15,20,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            z-index: 1001; transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .compare-drawer.open { left: 0; }
+        .compare-drawer::-webkit-scrollbar { width: 4px; }
+        .compare-drawer::-webkit-scrollbar-track { background: transparent; }
+        .compare-drawer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+        .drawer-header {
+            position: sticky; top: 0; z-index: 10; padding: 28px 28px 20px;
+            background: rgba(15,15,20,0.95); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-title { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+        .drawer-subtitle { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+        .drawer-close {
+            width: 32px; height: 32px; border: none; background: rgba(255,255,255,0.06);
+            border-radius: 8px; color: rgba(255,255,255,0.5); font-size: 18px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .drawer-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        .drawer-list { padding: 12px 16px 40px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* Compare card */
+        .compare-card {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 18px 20px; cursor: pointer; transition: all 0.2s;
+        }
+        .compare-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(99,102,241,0.3); }
+
+        .cc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .cc-city-info { display: flex; align-items: center; gap: 10px; }
+        .cc-rank {
+            width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .cc-rank.top3 { background: rgba(99,102,241,0.25); }
+        .cc-rank.rest { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+        .cc-flag { font-size: 20px; }
+        .cc-name { font-size: 15px; font-weight: 600; color: #fff; line-height: 1.2; }
+        .cc-country { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+
+        .cc-stats { display: flex; gap: 16px; margin-bottom: 12px; }
+        .cc-stat-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.8px; }
+        .cc-stat-value { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); margin-top: 1px; }
+
+        /* Mini religion bars in compare card */
+        .cc-religion { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+        .cc-religion-seg { height: 100%; transition: width 0.4s; }
+        .cc-religion-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .cc-religion-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.4); }
+        .cc-religion-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+        .cc-proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .cc-proscons-col { font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.5); font-weight: 300; }
+        .cc-proscons-col strong { font-weight: 600; font-size: 11px; }
+        .cc-proscons-col.pros strong { color: #4ade80; }
+        .cc-proscons-col.cons strong { color: #f87171; }
+
+        /* Overlay */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .drawer-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        /* Leaflet */
+        .leaflet-container { background: #0a0a0a; }
+        .leaflet-control-attribution { background: rgba(0,0,0,0.6) !important; color: rgba(255,255,255,0.3) !important; font-size: 10px !important; }
+        .leaflet-control-attribution a { color: rgba(255,255,255,0.4) !important; }
+
+        @media (max-width: 600px) {
+            .info-panel { width: 100vw; right: -100vw; }
+            .compare-drawer { width: 100vw; left: -100vw; }
+            .panel-header, .drawer-header { padding: 24px 20px 16px; }
+            .panel-body { padding: 8px 20px 40px; }
+            .drawer-list { padding: 12px 12px 40px; }
+            .pros-cons { grid-template-columns: 1fr; gap: 16px; }
+            .title-bar { top: 16px; left: 16px; }
+            .compare-btn { top: 88px; left: 16px; }
+        }
+
+        /* Image gallery */
+        .gallery { position: relative; width: 100%; height: 220px; border-radius: 12px; overflow: hidden; margin-top: 8px; }
+        .gallery img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease; }
+        .gallery img.active { opacity: 1; }
+        .gallery-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 2; }
+        .gallery-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: background 0.3s; }
+        .gallery-dot.active { background: #fff; }
+        .gallery-counter { position: absolute; top: 8px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; z-index: 2; }
+        .gallery-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.45); color: #fff; border: none; cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background 0.2s; backdrop-filter: blur(4px); }
+        .gallery-arrow:hover { background: rgba(0,0,0,0.7); }
+        .gallery-arrow.left { left: 8px; }
+        .gallery-arrow.right { right: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="title-bar">
+    <h1>Europe Relocation Map</h1>
+    <p>20 cities ranked for your family — click a pin to explore</p>
+</div>
+
+<button class="compare-btn" id="compareBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
+    Compare All
+</button>
+
+<div id="map"></div>
+
+<!-- Right panel (city detail) -->
+<div class="info-panel" id="infoPanel">
+    <div class="panel-header">
+        <button class="panel-close" id="panelClose">×</button>
+        <div class="panel-flag" id="panelFlag"></div>
+        <div class="panel-city" id="panelCity"></div>
+        <div class="panel-country" id="panelCountry"></div>
+        <div class="panel-rank-badge" id="panelRank"></div>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+</div>
+
+<!-- Left drawer (compare all) -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="compare-drawer" id="compareDrawer">
+    <div class="drawer-header">
+        <div>
+            <div class="drawer-title">All Cities Ranked</div>
+            <div class="drawer-subtitle">Sorted by overall match to your family</div>
+        </div>
+        <button class="drawer-close" id="drawerClose">×</button>
+    </div>
+    <div class="drawer-list" id="drawerList"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map', {
+    center: [45, 6], zoom: 5, zoomControl: false, dragging: false,
+    scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false
+});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+// =============================================
+// ALL 19 CITIES — unified ranking
+// =============================================
+const locations = {
+
+pontevedra: {
+    lat: 42.431, lng: -8.644, flag: '🇪🇸', city: 'Pontevedra', country: 'Galicia, Spain', rank: 3,
+    population: '83K', familyCost: '€2,150/mo',
+    overview: `This is your city. An 83,000-person town in green, Celtic-influenced Galicia that literally redesigned itself around children and pedestrians. In 1999, the mayor banned cars from the center and rebuilt public space from the sightline of a kid. Playgrounds have no fences. Children carry backpacks of toys and spread them on the pavement to share. Kids play in the streets until dark while parents sit at cafés.\n\nGalicia is the greenest region in Spain — lush Atlantic forests, river valleys, and vineyards. Pontevedra sits on the Rías Baixas, with beaches 20–30 minutes away. The climate is mild year-round (avg 69°F summer, 47°F winter), though winters are wet. ~30% speak Galician (close to Portuguese) alongside Spanish.\n\nFor church planting, Galicia is deeply post-Catholic. Traditional religion is cultural wallpaper, not lived faith. The spiritual soil is open.`,
+    stats: [
+        { value: '83K', label: 'Population' }, { value: '€2,150', label: 'Avg. Family Monthly' },
+        { value: '20°C', label: 'Avg. Summer High' }, { value: '30 min', label: 'Train to Vigo' },
+        { value: '20 min', label: 'Drive to Beach' }, { value: '#3', label: 'Your Match Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 48, color: '#22d3ee' }, { name: 'Catholic', pct: 45, color: '#818cf8' },
+        { name: 'Other', pct: 5, color: '#94a3b8' }, { name: 'Muslim', pct: 1, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Car-free center designed from a child\'s eye level','Kids play in streets until dark — parents at cafés','Won multiple European livability awards','Green Atlantic Galicia — lush forests & rivers','Rías Baixas beaches 20 min away','Deep church planting opportunity — post-Catholic soil','Excellent train connections (Vigo, Santiago, Madrid)'],
+    cons: ['Winters are genuinely wet and grey','Spain requires US renunciation for citizenship','Smaller city — limited international community','Homeschooling is a legal gray area in Spain','Galician language adds complexity'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,800–2,500' },{ label: '2-Bedroom Apartment', value: '€600–900' },{ label: 'Groceries (family)', value: '€350–450' },{ label: 'Utilities', value: '€100–150' },{ label: 'Dining Out (meal for 2)', value: '€25–35' }],
+    familyLife: `A UK family who relocated to nearby Gondomar described it: "It felt like a small town with a strong community from the get-go — a park, a skatepark, plazas for tapas, kids meeting friends in the park on weekends." The car-free center means your daughter can roam freely. Entire urban design philosophy centers children's safety and independence.`,
+    visaInfo: `Spain Digital Nomad Visa (€2,850/mo minimum). Permanent residency after 5 years. Citizenship after 10 years requires renouncing US passport.`,
+    checklist: ['Start learning Spanish now (Galician is a bonus)','Plan 10-day scouting trip to Galicia region','Visit Pontevedra, Santiago, Gondomar on same trip','Consult Spanish immigration attorney','Join Galicia expat Facebook groups','Run family budget with 3-4 kids against cost of living','Research public vs. international schools']
+},
+
+braga: {
+    lat: 41.5518, lng: -8.4229, flag: '🇵🇹', city: 'Braga', country: 'Portugal', rank: 4,
+    population: '180K', familyCost: '€2,400/mo',
+    overview: `Portugal's third-largest city feels like a large town — compact, walkable, centered around a stunning baroque old quarter. Named Best European Destination in 2021. University of Minho brings youthful energy. Train to Porto under 45 min. Peneda-Gerês National Park less than an hour.\n\nPortugal's D8 visa is the strongest pathway: citizenship in just 5 years while keeping your US passport. That's half the time Spain requires, with no renunciation.`,
+    stats: [
+        { value: '180K', label: 'Population' }, { value: '€2,400', label: 'Avg. Family Monthly' },
+        { value: '25°C', label: 'Avg. Summer High' }, { value: '45 min', label: 'Train to Porto' },
+        { value: '40 min', label: 'Drive to Beach' }, { value: '5 yr', label: 'To Dual Citizenship' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 65, color: '#818cf8' }, { name: 'Irreligious', pct: 25, color: '#22d3ee' },
+        { name: 'Other', pct: 6, color: '#94a3b8' }, { name: 'Protestant', pct: 3, color: '#fbbf24' },
+        { name: 'Muslim', pct: 1, color: '#6ee7b7' }
+    ],
+    pros: ['Best European Destination 2021','Fastest citizenship — 5 years, dual nationality OK','Compact, walkable baroque old quarter','Green Minho hills, Peneda-Gerês NP nearby','University town energy — youthful, international','Affordable by Western European standards'],
+    cons: ['Rainy Atlantic winters','Portuguese harder to learn than Spanish','Smaller international school options','Less walkable outside center','Fewer direct international flights (use Porto)'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€2,000–2,800' },{ label: '2-Bedroom Apartment', value: '€700–1,100' },{ label: 'Groceries (family)', value: '€350–450' },{ label: 'Dining Out (meal for 2)', value: '€25–40' }],
+    familyLife: `Compact center is very walkable. Portuguese culture is deeply family-oriented. University ensures cultural events year-round. Peneda-Gerês is a weekend hiking paradise. Public schools free, growing international options via Porto.`,
+    visaInfo: `Portugal D8 visa (€3,680/mo minimum). Citizenship in 5 years. Dual citizenship allowed — keep your US passport. Strongest visa pathway on the list.`,
+    checklist: ['Research Portugal D8 visa — strongest dual citizenship path','Start Portuguese','Plan scouting trip: Braga + Viana do Castelo + Porto','Consult Portuguese immigration attorney','Visit Peneda-Gerês','Research schools in Braga area']
+},
+
+valencia: {
+    lat: 39.4699, lng: -0.3763, flag: '🇪🇸', city: 'Valencia', country: 'Spain', rank: 10,
+    population: '800K', familyCost: '€2,700/mo',
+    overview: `A mid-size city with the Turia — a former riverbed converted into a 9km park through the entire city. Barrio culture means tight-knit neighborhoods, warm people, café/plaza life where you know your neighbors. Benimaclet is a village within the city — a former pueblo that kept its own plaza, rhythm, and fierce local identity.\n\nBest cycling infrastructure in Spain. Mediterranean climate. Fallas festivals are deeply inclusive. Spain is deeply post-Catholic and spiritually curious — wide open for church planting.\n\nRisk: Valencia is growing fast as a DN hub. Rents rising. What makes Benimaclet special may erode before your move.`,
+    stats: [
+        { value: '800K', label: 'City Population' }, { value: '€2,700', label: 'Avg. Family Monthly' },
+        { value: '30°C', label: 'Avg. Summer High' }, { value: '9 km', label: 'Turia Park' },
+        { value: '95 min', label: 'AVE to Madrid' }, { value: 'In city', label: 'Beach' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 38, color: '#818cf8' },
+        { name: 'Muslim', pct: 3, color: '#6ee7b7' }, { name: 'Other', pct: 3, color: '#94a3b8' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Turia park — 9km green corridor','Benimaclet — village within a city','Best cycling infrastructure in Spain','Warm barrio culture, walkable','Fallas festivals — deeply inclusive','City of Arts and Sciences','Church planting opportunity — spiritually curious culture'],
+    cons: ['Larger than ideal (800K) — Benimaclet mitigates this','Gentrification risk — DN hub rent pressure','Hot summers (35°C+)','Spain citizenship = US renunciation','Tourist pressure in some areas'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€2,200–3,200' },{ label: '2-Bedroom Apartment', value: '€900–1,300' },{ label: 'Groceries (family)', value: '€400–500' },{ label: 'Public Transit', value: '€40' },{ label: 'Dining Out (meal for 2)', value: '€30–45' }],
+    familyLife: `Turia is a 9km playground, garden, and sports complex. Spanish culture is intensely family-oriented. Public schools free, increasingly bilingual. Pediatric healthcare covered. Work-life balance is cultural — long lunches, family time sacred.`,
+    visaInfo: `Spain Digital Nomad Visa (€2,850/mo) or Non-Lucrative. PR after 5 years. Citizenship 10 years (US renunciation).`,
+    checklist: ['Visit Benimaclet specifically — walk the community gardens','Research gentrification trends','Explore Ruzafa and El Cabanyal too','Ride Valenbisi through Turia','Attend Fallas if possible','Get NIE process started early']
+},
+
+santiago: {
+    lat: 42.8782, lng: -8.5448, flag: '🇪🇸', city: 'Santiago de Compostela', country: 'Galicia, Spain', rank: 6,
+    population: '100K', familyCost: '€2,200/mo',
+    overview: `A city built around welcoming strangers for over a thousand years. That DNA of hospitality is baked into the culture. ~100,000 people, UNESCO World Heritage granite old town, working university city (40,000+ students).\n\nThe spiritual landscape is fascinating: the cathedral draws millions of pilgrims, but practicing faith is largely ceremonial. Many pilgrims arrive with deep spiritual questions and no church community. There may be a unique church-planting opening here that doesn't exist anywhere else.`,
+    stats: [
+        { value: '100K', label: 'Population' }, { value: '€2,200', label: 'Avg. Family Monthly' },
+        { value: '22°C', label: 'Avg. Summer High' }, { value: '40K+', label: 'University Students' },
+        { value: '40 min', label: 'Drive to Coast' }, { value: 'Major', label: 'Rail Hub' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 48, color: '#818cf8' }, { name: 'Irreligious', pct: 44, color: '#22d3ee' },
+        { name: 'Other/Spiritual', pct: 6, color: '#94a3b8' }, { name: 'Muslim', pct: 1, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['1000 years of welcoming strangers','Unique church planting among spiritual seekers','UNESCO granite old town','University city — alive year-round','Major Galician rail hub → Madrid HSR','Green, intellectual, walkable','Affordable'],
+    cons: ['Wet, misty Galician climate','Tourist crowds near cathedral','Spain citizenship = US renunciation','Hilly — less bikeable','Limited international schools'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,800–2,600' },{ label: '2-Bedroom Apartment', value: '€650–1,000' },{ label: 'Groceries (family)', value: '€350–450' },{ label: 'Dining Out (meal for 2)', value: '€25–35' }],
+    familyLife: `University keeps city youthful and culturally rich. Granite old town is magical for children. Markets central to daily life. Surrounding countryside offers endless nature. Free public schools teach Spanish + Galician.`,
+    visaInfo: `Spain Digital Nomad Visa (€2,850/mo) → PR 5 years → Citizenship 10 years (US renunciation).`,
+    checklist: ['Walk a section of the Camino on scouting trip','Visit during non-peak season','Connect with small church communities','Explore neighborhoods beyond tourist old town','Talk to Camino-related ministry organizations']
+},
+
+bilbao: {
+    lat: 43.263, lng: -2.935, flag: '🇪🇸', city: 'Bilbao', country: 'Basque Country, Spain', rank: 8,
+    population: '350K', familyCost: '€2,600/mo',
+    overview: `On the Nervión River, ~350K with arguably the warmest community culture in all of Europe. Basque culture is intensely communal — txokos (food societies), neighborhood festivals, fierce pride in welcoming those who commit. Beach within 20 min by metro. Green hills surround the city.`,
+    stats: [
+        { value: '350K', label: 'Population' }, { value: '€2,600', label: 'Avg. Family Monthly' },
+        { value: '25°C', label: 'Avg. Summer High' }, { value: '20 min', label: 'Metro to Beach' },
+        { value: 'A2-B1', label: 'Spanish + Euskara' }, { value: '#8', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 58, color: '#22d3ee' }, { name: 'Catholic', pct: 35, color: '#818cf8' },
+        { name: 'Other', pct: 4, color: '#94a3b8' }, { name: 'Muslim', pct: 2, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Arguably warmest community culture in Europe','Txokos — instant deep community','Guggenheim — world-class','Beach 20 min by metro','Green hills, great for kids','Walkable with good transit','Excellent Basque cuisine'],
+    cons: ['Rainier and cooler than Mediterranean','Euskara extremely difficult','Basques reserved at first','Higher cost than southern Spain','Spain citizenship = US renunciation'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,000–1,400' },{ label: 'Groceries (family)', value: '€420–520' },{ label: 'Public Transit', value: '€45' },{ label: 'Dining Out (meal for 2)', value: '€35–50' }],
+    familyLife: `Basque culture is intensely family-oriented. Ikastola schools teach Spanish + Euskara. Beach town Getxo is a metro ride away. Txoko tradition builds lifelong friendships. Safe, clean, compact.`,
+    visaInfo: `Spanish pathway. Basque Country has its own regional tax system.`,
+    checklist: ['Learn Basque culture specifically','Visit Casco Viejo and Deusto','Try attending a local festival','Research ikastola schools','Understand Basque Country tax differences']
+},
+
+toulouse: {
+    lat: 43.6047, lng: 1.4442, flag: '🇫🇷', city: 'Toulouse', country: 'France', rank: 12,
+    population: '500K', familyCost: '€2,800/mo',
+    overview: `"La Ville Rose" on the Garonne River — one of France's warmest cities in both climate and people. ~500K with strong neighborhood identity, incredible markets, relaxed-but-not-boring pace. Significantly cheaper than Paris or Lyon. Vibrant multicultural population. Southwest French culture is famously hospitable. Your brother in Paris is a TGV ride away.`,
+    stats: [
+        { value: '500K', label: 'Population' }, { value: '€2,800', label: 'Avg. Family Monthly' },
+        { value: '27°C', label: 'Avg. Summer High' }, { value: 'B1-B2', label: 'French Needed' },
+        { value: '4.5 hr', label: 'TGV to Paris' }, { value: '#12', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 25, color: '#818cf8' },
+        { name: 'Muslim', pct: 12, color: '#6ee7b7' }, { name: 'Other', pct: 5, color: '#94a3b8' },
+        { name: 'Protestant', pct: 3, color: '#fbbf24' }
+    ],
+    pros: ['Warmest people in France','Garonne River walks','Cheaper than Paris/Lyon','Good metro, walkable','Multicultural population','TGV to Paris — brother accessible','Incredible market culture','Airbus HQ — strong job market'],
+    cons: ['French essential','French bureaucracy','Hot summers getting hotter','Can feel provincial','France 5-yr citizenship (but dual OK)'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,000–1,400' },{ label: 'Groceries (family)', value: '€450–580' },{ label: 'Public Transit', value: '€52' },{ label: 'Dining Out (meal for 2)', value: '€35–55' }],
+    familyLife: `Free public schooling, generous CAF childcare. Garonne riverbanks for family cycling. Cité de l'Espace for kids. Markets central to daily life. Southwest French emphasis on long meals, family gatherings, community festivals.`,
+    visaInfo: `France Talent Passport, Visitor, or auto-entrepreneur. Citizenship 5 years. Dual citizenship allowed.`,
+    checklist: ['Start French (southwest accent)','Visit Saint-Cyprien, Carmes, Capitole','Open French bank online','Research crèches and maternelles','Hit Sunday markets on scouting trip']
+},
+
+san_sebastian: {
+    lat: 43.3183, lng: -1.9812, flag: '🇪🇸', city: 'San Sebastián', country: 'Basque Country, Spain', rank: 11,
+    population: '188K', familyCost: '€4,000/mo',
+    overview: `By many measures the most beautiful city in Spain. Three beaches between forested headlands, green Basque hills, unmatched food scene per capita. Basque identity is exactly the Atlantic/Celtic depth you described. Txokos and pintxos culture builds deep community. 30%+ residents born outside Spain. The dream lifestyle pick if budget allows.`,
+    stats: [
+        { value: '188K', label: 'Population' }, { value: '€4,000', label: 'Avg. Family Monthly' },
+        { value: '24°C', label: 'Avg. Summer High' }, { value: 'In city', label: 'Beach (La Concha)' },
+        { value: '30%+', label: 'Born Outside Spain' }, { value: '#11', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 60, color: '#22d3ee' }, { name: 'Catholic', pct: 33, color: '#818cf8' },
+        { name: 'Other', pct: 4, color: '#94a3b8' }, { name: 'Muslim', pct: 2, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Most beautiful city in Spain','World-class pintxos and food','Txokos build deep community','Basque Atlantic/Celtic depth','Beach in city','30%+ born outside Spain — diverse','Dbizi e-bike system'],
+    cons: ['Highest housing costs outside Barcelona','Basques reserved at first','Rainy Atlantic climate','Requires strong income','Euskara extremely difficult','Spain citizenship = US renunciation'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€3,500–4,500' },{ label: '2-Bedroom Apartment', value: '€1,500–2,200' },{ label: 'Groceries (family)', value: '€450–550' },{ label: 'Dining Out (meal for 2)', value: '€50–70' }],
+    familyLife: `La Concha beach is your backyard. Surfing on Zurriola. Green mountain hiking without a car. Ikastola schools. Txoko tradition builds lifelong friendships. Kids central to Basque community.`,
+    visaInfo: `Spanish pathway. Basque Country has own regional tax system.`,
+    checklist: ['Run budget carefully — most expensive option','Visit Gros and Antiguo neighborhoods','Attend a pintxo evening','Research Basque Country taxes','Look into ikastola schools']
+},
+
+chania: {
+    lat: 35.5138, lng: 24.0180, flag: '🇬🇷', city: 'Chania', country: 'Crete, Greece', rank: 9,
+    population: '55K', familyCost: '€2,400/mo',
+    overview: `The romantic pick. 55K wrapped around a Venetian harbor with White Mountains behind. Filoxenia — "love of strangers" — is a genuine cultural value here. Cretans are fiercely hospitable. Apokoronas villages offer traditional stone-house living. Christians in Crete is an active community hub.\n\nTrade-offs: island (no trains to mainland), hot dry summers, Greek bureaucracy is legendary.`,
+    stats: [
+        { value: '55K', label: 'Population' }, { value: '€2,400', label: 'Avg. Family Monthly' },
+        { value: '29°C', label: 'Avg. Summer High' }, { value: '300+', label: 'Sunny Days/Year' },
+        { value: 'Island', label: 'Connectivity' }, { value: '#9', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Greek Orthodox', pct: 75, color: '#818cf8' }, { name: 'Irreligious', pct: 15, color: '#22d3ee' },
+        { name: 'Other', pct: 5, color: '#94a3b8' }, { name: 'Muslim', pct: 4, color: '#6ee7b7' },
+        { name: 'Catholic', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Venetian harbor — most romantic on the list','Filoxenia — genuine love of strangers','Cretans fiercely hospitable','White Mountains + Mediterranean beaches','Christians in Crete community','Very affordable','300+ sunny days','Cretan diet — healthiest in world'],
+    cons: ['Island — flights/ferries only','Hot, dry summers (not green/temperate)','Greek bureaucracy legendary','Car essential','Greek language hard','Healthcare varies outside cities','Tourist crowds summer'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€2,000–2,800' },{ label: '2-Bedroom Apartment', value: '€600–1,000' },{ label: 'Car (essential)', value: '€200–300' },{ label: 'Dining Out (meal for 2)', value: '€25–40' }],
+    familyLife: `Greek culture revolves around family. Children welcome everywhere. Apokoronas villages for traditional life. Public schools free. Outdoor lifestyle is the draw. Pace of life slower, more intentional.`,
+    visaInfo: `Greece DN visa (~€3,500/mo). Citizenship 7 years. Dual conditional.`,
+    checklist: ['Visit Chania old town + Apokoronas villages','Connect with Christians in Crete','Check international schools','Plan for a car','Learn basic Greek']
+},
+
+granada: {
+    lat: 37.1773, lng: -3.5986, flag: '🇪🇸', city: 'Granada', country: 'Spain', rank: 1,
+    population: '230K', familyCost: '€1,900/mo',
+    overview: `~230K at the foot of the Sierra Nevada. Deep Moorish and North African heritage — one of Spain's most culturally diverse cities. Your daughter would see herself reflected everywhere. Albaicín has village-like community. Cheapest city in Western Europe. Legendary free-tapas culture designed to build community. People are exceptionally warm. The Alhambra is in your city.`,
+    stats: [
+        { value: '230K', label: 'Population' }, { value: '€1,900', label: 'Avg. Family Monthly' },
+        { value: '34°C', label: 'Avg. Summer High' }, { value: '45 min', label: 'To Beach' },
+        { value: 'Lowest', label: 'Cost in W. Europe' }, { value: '#1', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 52, color: '#22d3ee' }, { name: 'Catholic', pct: 40, color: '#818cf8' },
+        { name: 'Muslim', pct: 4, color: '#6ee7b7' }, { name: 'Other', pct: 3, color: '#94a3b8' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Cheapest city in Western Europe','Moorish heritage — culturally diverse','Daughter would see herself everywhere','Free tapas builds community','Exceptionally warm people','Albaicín — village-like tight-knit','Sierra Nevada skiing/hiking','Alhambra in your city'],
+    cons: ['Limited job market','Beach 45 min away','Summer heat extreme (40°C+)','Less international infrastructure','Can feel isolated','Limited international flights'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€550–900' },{ label: 'Groceries (family)', value: '€320–420' },{ label: 'Utilities', value: '€100–150' },{ label: 'Dining Out (meal for 2)', value: '€20–35' }],
+    familyLife: `Everything walkable, neighbors know each other. Free tapas is social ritual. Albaicín is UNESCO village inside a city. Sierra Nevada for skiing/hiking. Barista knows your name in a week.`,
+    visaInfo: `Same Spanish pathways. Low cost means financial requirements go further.`,
+    checklist: ['Visit Albaicín, Realejo, Centro','Start Spanish (Andalusian accent)','Plan scouting trip spring','Check international school options (limited)']
+},
+
+lyon: {
+    lat: 45.764, lng: 4.8357, flag: '🇫🇷', city: 'Lyon', country: 'France', rank: 16,
+    population: '516K', familyCost: '€3,200/mo',
+    overview: `Two rivers (Rhône and Saône) converge here. Organized around distinct, walkable neighborhoods with their own personalities. France's food capital — bouchon culture means regulars treated like family. Excellent metro/tram/bike-share. Larger than ideal (~500K city, 1.5M metro) but genuinely lives like a collection of villages. More diverse and cosmopolitan than Toulouse. Progressive, family-friendly, deep civic pride.`,
+    stats: [
+        { value: '516K', label: 'Population' }, { value: '€3,200', label: 'Avg. Family Monthly' },
+        { value: '27°C', label: 'Avg. Summer High' }, { value: 'B2+', label: 'French Needed' },
+        { value: '2 hr', label: 'TGV to Paris' }, { value: '#16', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 50, color: '#22d3ee' }, { name: 'Catholic', pct: 28, color: '#818cf8' },
+        { name: 'Muslim', pct: 14, color: '#6ee7b7' }, { name: 'Other', pct: 5, color: '#94a3b8' },
+        { name: 'Protestant', pct: 3, color: '#fbbf24' }
+    ],
+    pros: ['World-renowned food capital','Two rivers — gorgeous riverfront','Feels like collection of villages','Excellent metro/tram/bike-share','TGV to Paris 2 hours','Diverse, cosmopolitan','Strong tech & biotech jobs'],
+    cons: ['More expensive than Toulouse','French bureaucracy','B2 language minimum','Higher taxes','Grey damp winters','Housing competitive'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,600–2,100' },{ label: 'Groceries (family)', value: '€500–650' },{ label: 'Public Transit', value: '€67' },{ label: 'Dining Out (meal for 2)', value: '€45–70' }],
+    familyLife: `Free public schools through university. Parc de la Tête d'Or — free zoo, lake, garden. Walkable and safe. 35-hour weeks, 5+ weeks vacation, generous parental leave.`,
+    visaInfo: `France Talent Passport, salaried, Visitor, or auto-entrepreneur. Citizenship 5 years. Dual OK.`,
+    checklist: ['Research 6th & 7th arrondissements','Start French (B1 before arrival)','Open French bank online','Visit Parc de la Tête d\'Or']
+},
+
+ljubljana: {
+    lat: 46.0569, lng: 14.5058, flag: '🇸🇮', city: 'Ljubljana', country: 'Slovenia', rank: 13,
+    population: '280K', familyCost: '€2,300/mo',
+    overview: `The surprise pick. ~280K with the Ljubljanica River running through a car-free pedestrian center. One of Europe's greenest capitals. Incredibly safe. Slovenians reserved at first but genuinely hospitable once you're in. Alps, forests, coast all within an hour. Quietly one of Europe's most tolerant countries.\n\nSignificant church-planting opportunity — very secular, post-communist with genuine spiritual openness.`,
+    stats: [
+        { value: '280K', label: 'Population' }, { value: '€2,300', label: 'Avg. Family Monthly' },
+        { value: '26°C', label: 'Avg. Summer High' }, { value: 'A2', label: 'Slovenian Needed' },
+        { value: '1 hr', label: 'To Alps / Coast' }, { value: '#13', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 45, color: '#818cf8' }, { name: 'Irreligious', pct: 42, color: '#22d3ee' },
+        { name: 'Other', pct: 7, color: '#94a3b8' }, { name: 'Muslim', pct: 5, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Car-free pedestrian center','One of Europe\'s greenest capitals','Incredibly safe','Alps, forests, coast in 1 hour','Very tolerant society','Church planting opportunity','High English proficiency','Affordable'],
+    cons: ['Slovenians initially reserved','May feel small','Slovenian difficult','Small expat community','Limited flights','Cold grey winters'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€800–1,200' },{ label: 'Groceries (family)', value: '€400–500' },{ label: 'Public Transit', value: '€35' },{ label: 'Dining Out (meal for 2)', value: '€30–45' }],
+    familyLife: `Car-free center — kids roam safely. Tivoli Park in center. Alps 1hr. Lake Bled 45 min. Free schools. Universal healthcare. Weekend trips to Italy, Austria, Croatia easy.`,
+    visaInfo: `Slovenia DN permit or self-employment. EU member. PR after 5 years. Citizenship 10 years.`,
+    checklist: ['Visit Ljubljana + Lake Bled','Check English-language schools','Understand 19% flat income tax','Explore Šiška and Bežigrad','Start basic Slovenian']
+},
+
+lecce: {
+    lat: 40.3516, lng: 18.1718, flag: '🇮🇹', city: 'Lecce', country: 'Puglia, Italy', rank: 5,
+    population: '95K', familyCost: '€2,000/mo',
+    overview: `"The Florence of the South" — 95K in extraordinary baroque architecture. Passeggiata (evening stroll) is a daily ritual. 80% of expats report positive local interactions. Piazza culture: café mornings, kids playing, long slow socializing. Beaches 10 min. Puglia cuisine is legendary. Italy allows dual citizenship.`,
+    stats: [
+        { value: '95K', label: 'Population' }, { value: '€2,000', label: 'Avg. Family Monthly' },
+        { value: '31°C', label: 'Avg. Summer High' }, { value: '10 min', label: 'Beach' },
+        { value: '€28K', label: 'DN Visa Min/yr' }, { value: '#5', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 55, color: '#818cf8' }, { name: 'Irreligious', pct: 35, color: '#22d3ee' },
+        { name: 'Other', pct: 6, color: '#94a3b8' }, { name: 'Muslim', pct: 3, color: '#6ee7b7' },
+        { name: 'Protestant', pct: 1, color: '#fbbf24' }
+    ],
+    pros: ['Stunning baroque — "Florence of the South"','Passeggiata — daily evening stroll','80% expats positive experiences','Beaches 10 min','Very affordable','Legendary Puglia cuisine','Dual citizenship (keep US passport)','Growing homeschool community'],
+    cons: ['Hot dry summers','Car needed outside center','Southern rail weaker','Italian bureaucracy','10 years to citizenship','Limited local jobs'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,600–2,400' },{ label: '2-Bedroom Apartment', value: '€500–800' },{ label: 'Groceries (family)', value: '€300–400' },{ label: 'Dining Out (meal for 2)', value: '€25–35' }],
+    familyLife: `Piazza culture — family life in public. Evening passeggiata is daily. Homeschooling legal with growing Puglia community. Porto Selvaggio NP nearby. Puglia food is one of Italy's healthiest.`,
+    visaInfo: `Italy DN visa (~€28K/year). Citizenship 10 years. Dual nationality allowed.`,
+    checklist: ['Research Italy DN visa','Visit Lecce old town + beaches','Connect with homeschool Puglia group','Explore Porto Selvaggio','Check international schools','Start Italian basics']
+},
+
+rijeka: {
+    lat: 45.3271, lng: 14.4422, flag: '🇭🇷', city: 'Rijeka', country: 'Croatia', rank: 15,
+    population: '130K', familyCost: '€2,100/mo',
+    overview: `Croatia's third-largest city and its most liberal, least religious. A gritty, authentic Adriatic port with Italian, Hungarian, and Austrian cultural layers — none of the tourist polish of Dubrovnik or Split, which is exactly why it works. European Capital of Culture 2020.\n\nRijeka's Korzo (main pedestrian street) is where the city lives — kids running, coffee lingering, evening promenades. The Opatija Riviera is 15 minutes away for beaches. Kvarner Gulf islands (Cres, Krk, Lošinj) are day trips. The city is compact, walkable, and increasingly bike-friendly.\n\nCroatia joined the EU in 2013 and the Schengen zone in 2023. Digital nomad visa is straightforward. Rijeka has a university, a growing creative scene, and a cost of living well below Western Europe. English proficiency is high among younger Croatians.\n\nThe spiritual landscape is wide open — Rijeka is Croatia's most secular city by far, with the lowest church attendance in the country. Post-Catholic soil with genuine curiosity.`,
+    stats: [
+        { value: '130K', label: 'Population' }, { value: '€2,100', label: 'Avg. Family Monthly' },
+        { value: '28°C', label: 'Avg. Summer High' }, { value: '5°C', label: 'Avg. Winter Low' },
+        { value: '15 min', label: 'To Opatija Beach' }, { value: '#15', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 35, color: '#818cf8' },
+        { name: 'Orthodox', pct: 4, color: '#f97316' }, { name: 'Muslim', pct: 3, color: '#6ee7b7' },
+        { name: 'Other', pct: 3, color: '#94a3b8' }
+    ],
+    pros: ['Croatia\'s most secular city — wide open spiritual soil','EU + Schengen member (2023)','Adriatic coast without tourist prices','Italian/Hungarian/Austrian cultural layers','European Capital of Culture 2020','Compact and walkable','Kvarner Gulf islands as day trips','High English proficiency among youth','Very affordable by EU standards'],
+    cons: ['Gritty port city — less polished than Split/Dubrovnik','Bura wind can be intense in winter','Smaller international community','Croatian language barrier','Economy still developing','Less sunshine than Dalmatian coast','Not a tourist destination — fewer direct flights'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,700–2,500' },{ label: '2-Bedroom Apartment', value: '€500–800' },{ label: 'Groceries (family)', value: '€350–450' },{ label: 'Utilities', value: '€100–160' },{ label: 'Dining Out (meal for 2)', value: '€25–40' },{ label: 'Public Transit', value: '€35/mo' }],
+    familyLife: `Korzo promenade is the family living room — kids play while parents drink coffee at sidewalk cafés. Opatija Riviera beaches 15 min away. Trsat Castle overlooks the city and is a free playground with views. The Kvarner coast has cleaner, quieter beaches than Dalmatia. Croatian schools are free and solid. The city is safe — kids walk to school independently. Carnival (Rijeka Carnival is Croatia's largest) is a massive family event every February.`,
+    visaInfo: `Croatia Digital Nomad Visa: 1 year, no Croatian tax on foreign income, €2,539/mo minimum. EU member since 2013, Schengen since 2023. Temporary residence after DN visa. Permanent residency after 5 years. Citizenship after 8 years — Croatia allows dual nationality.`,
+    checklist: ['Research Croatia DN visa (tax-free on foreign income)','Visit Rijeka + Opatija Riviera on same trip','Walk the Korzo and explore Trsat Castle','Check international school options','Experience Rijeka Carnival if visiting Feb','Explore Kvarner islands (Cres, Krk)','Start basic Croatian (similar to other South Slavic languages)','Connect with growing expat community']
+},
+
+sarajevo: {
+    lat: 43.8563, lng: 18.4131, flag: '🇧🇦', city: 'Sarajevo', country: 'Bosnia & Herzegovina', rank: 2,
+    population: '280K', familyCost: '€1,600/mo',
+    overview: `The most religiously diverse city in Europe — mosques, Orthodox churches, Catholic cathedrals, and a historic synagogue within a 5-minute walk in the old town. Sarajevo is a place where faith is lived openly and pluralistically, making it an extraordinary landscape for church planting.\n\nBasically two cities: the Ottoman old town (Baščaršija) with copper workshops, čevapi stands, and narrow lanes; and the Austro-Hungarian new town with wide boulevards and coffee houses. Both are walkable and alive.\n\nThe kafana (coffee house) culture is the social backbone — neighbors sit together for hours over Bosnian coffee. Community here isn't an aspiration, it's the default. Bosnians are famously warm and will feed you before they know your name.\n\nSurrounded by mountains on all sides. Skiing 20 minutes from the city center (1984 Winter Olympics). Very affordable. Not EU, but safe, stable, and increasingly connected. English growing fast among younger generation.`,
+    stats: [
+        { value: '280K', label: 'Population' }, { value: '€1,600', label: 'Avg. Family Monthly' },
+        { value: '27°C', label: 'Avg. Summer High' }, { value: '-1°C', label: 'Avg. Winter Low' },
+        { value: '20 min', label: 'To Ski Slopes' }, { value: '#2', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Muslim', pct: 45, color: '#6ee7b7' }, { name: 'Orthodox', pct: 30, color: '#818cf8' },
+        { name: 'Catholic', pct: 15, color: '#f97316' }, { name: 'Irreligious', pct: 7, color: '#22d3ee' },
+        { name: 'Other', pct: 3, color: '#94a3b8' }
+    ],
+    pros: ['Most religiously diverse city in Europe','Kafana culture — community is the default','Bosnian warmth — fed before they know your name','Incredibly affordable','Walkable old town (Baščaršija) + Austro-Hungarian new town','Mountains on all sides — skiing 20 min away','1984 Winter Olympics heritage','Unique spiritual landscape for church planting','Rich cultural layers — Ottoman, Austrian, Yugoslav'],
+    cons: ['Not EU (candidate country)','Cold snowy winters','Post-war scars still visible','Bosnian bureaucracy is notoriously slow','Air quality issues in winter (valley + coal heating)','Economy weaker than EU neighbors','Bosnian language barrier','Political structure is complex (two entities)','Fewer direct international flights'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,200–2,000' },{ label: '2-Bedroom Apartment', value: '€400–700' },{ label: 'Groceries (family)', value: '€250–350' },{ label: 'Utilities', value: '€80–130' },{ label: 'Dining Out (meal for 2)', value: '€15–25' },{ label: 'Public Transit', value: '€25/mo' }],
+    familyLife: `Baščaršija is a car-free wonderland for kids — narrow lanes open to squares where children play and čevapi smoke fills the air. Bosnian families are large and loud and welcoming. Vrelo Bosne (source of the Bosna River) is the family weekend spot — a park with swans, bridges, and crystal-clear springs. Mountains mean skiing in winter and hiking in summer. The evening korzo (promenade) along Ferhadija street is nightly family time. International schools exist (including QSI and the French school). Bosnian coffee ritual is taught to children — it's about slowing down and being together.`,
+    visaInfo: `Bosnia does not require a visa for US citizens for stays up to 90 days. For longer stays: temporary residence permit (renewable annually, requires proof of income or employment). No formal digital nomad visa yet, but freelancer/self-employment permits available. Path to permanent residency after 5 years. Citizenship after 8 years of permanent residency. Dual citizenship allowed with Bosnia.`,
+    checklist: ['Visit Baščaršija and walk the Ottoman/Austro-Hungarian divide','Drink Bosnian coffee at a kafana — experience the ritual','Visit Vrelo Bosne park with the family','Check international school options (QSI, French school)','Understand the political structure (Federation vs. Republika Srpska)','Research temporary residence permit process','Plan winter visit to understand the cold + air quality','Connect with expat community (smaller but growing)','Learn basic Bosnian (South Slavic — similar to Croatian/Serbian)']
+},
+
+ghent: {
+    lat: 51.0543, lng: 3.7174, flag: '🇧🇪', city: 'Ghent', country: 'Belgium', rank: 14,
+    population: '260K', familyCost: '€2,800/mo',
+    overview: `Mid-size Flemish city (~260K) around canals and rivers. One of Europe's most bikeable, underrated cities. University city with creative, welcoming energy. English widely spoken. Diverse, progressive. Family-friendly, safe, architecturally stunning. Climate cooler and grayer but mild.`,
+    stats: [
+        { value: '260K', label: 'Population' }, { value: '€2,800', label: 'Avg. Family Monthly' },
+        { value: '22°C', label: 'Avg. Summer High' }, { value: 'A2-B1', label: 'Dutch Needed' },
+        { value: 'High', label: 'English Proficiency' }, { value: '#14', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 58, color: '#22d3ee' }, { name: 'Catholic', pct: 20, color: '#818cf8' },
+        { name: 'Muslim', pct: 12, color: '#6ee7b7' }, { name: 'Other', pct: 8, color: '#94a3b8' },
+        { name: 'Protestant', pct: 2, color: '#fbbf24' }
+    ],
+    pros: ['Most bikeable in Europe','Canal-side medieval beauty','University city — creative, open','English widely spoken','Diverse, progressive','Paris/Amsterdam/London nearby','Excellent beer and food'],
+    cons: ['Grey rainy (200+ rain days)','Belgians initially reserved','Dutch useful long-term','Higher taxes than south','Less sunshine','Smaller city'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,100–1,500' },{ label: 'Groceries (family)', value: '€450–550' },{ label: 'Utilities', value: '€150–200' },{ label: 'Dining Out (meal for 2)', value: '€40–60' }],
+    familyLife: `Cycling infrastructure — kids ride to school safely. Free high-standard Belgian schools. Gentse Feesten children's section legendary. Canal walks daily. Creative cultural events constant.`,
+    visaInfo: `Belgium Professional Card for self-employed, or employer-sponsored. PR after 5 years. Dual citizenship allowed.`,
+    checklist: ['Visit Patershol, Coupure, Muinkpark','Start Dutch basics','Research Flemish public vs. international schools','Register with mutualiteit for healthcare']
+},
+
+nantes: {
+    lat: 47.2184, lng: -1.5536, flag: '🇫🇷', city: 'Nantes', country: 'France', rank: 17,
+    population: '320K', familyCost: '€2,700/mo',
+    overview: `On the Loire, ~320K. Consistently voted France's most livable city. Creative, offbeat energy, excellent tram, strong neighborhood identity. More affordable than most French cities. Atlantic beach about an hour. Diverse, progressive. Machines de l'Île — a giant mechanical elephant is basically a permanent family playground.`,
+    stats: [
+        { value: '320K', label: 'Population' }, { value: '€2,700', label: 'Avg. Family Monthly' },
+        { value: '24°C', label: 'Avg. Summer High' }, { value: 'B1-B2', label: 'French Needed' },
+        { value: '1 hr', label: 'To Atlantic Beach' }, { value: '#17', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 58, color: '#22d3ee' }, { name: 'Catholic', pct: 28, color: '#818cf8' },
+        { name: 'Muslim', pct: 7, color: '#6ee7b7' }, { name: 'Other', pct: 4, color: '#94a3b8' },
+        { name: 'Protestant', pct: 3, color: '#fbbf24' }
+    ],
+    pros: ['France\'s most livable city','Machines de l\'Île!','Creative offbeat energy','Excellent tram','More affordable than Lyon/Paris','Atlantic beach 1hr','Diverse, progressive','Strong neighborhood festivals'],
+    cons: ['Grey rainy Atlantic winters','Less sunshine than south','French barrier','Smaller international community','Not as cosmopolitan as Lyon','Can feel quiet'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,000–1,400' },{ label: 'Groceries (family)', value: '€430–560' },{ label: 'Public Transit (TAN)', value: '€58' },{ label: 'Dining Out (meal for 2)', value: '€35–55' }],
+    familyLife: `Machines de l'Île is a permanent family playground. Île de Nantes — creative walkable district. CAF childcare generous. Atlantic coast for weekends. Voyage à Nantes summer festival.`,
+    visaInfo: `Same French system. Growing tech scene. Citizenship 5 years. Dual OK.`,
+    checklist: ['Visit Île de Nantes, Chantenay, Erdre','Research tech scene for jobs','Plan visit during Voyage à Nantes','Start French']
+},
+
+graz: {
+    lat: 47.0707, lng: 15.4395, flag: '🇦🇹', city: 'Graz', country: 'Styria, Austria', rank: 19,
+    population: '290K', familyCost: '€2,800/mo',
+    overview: `Austria's second city and its best-kept secret. A UNESCO old town wrapped around the Schlossberg (castle hill), with a clock tower that's become the city's symbol. The Mur River runs through the center, spanned by the Murinsel — a floating steel island café.\n\n290K people, six universities, 60,000+ students — which means Graz has the youthful, international energy of a university town with the infrastructure of a proper city. The old town is compact and fully walkable. Trams handle everything else.\n\nStyrian food culture is Austria's best: Buschenschank wine taverns (farmers open their homes to serve their own wine and food), pumpkin seed oil on everything, and a wine region (Südsteiermark) 45 minutes south that rivals Tuscany in beauty.\n\nAustrian Gemütlichkeit is real here — it's a culture of lingering over coffee and cake, of Beisl (neighborhood pubs) where regulars sit for hours, of inviting people in. Less formal than Vienna, warmer than anywhere in Germany. The café culture supports exactly the kind of organic, over-food conversations you're looking for.\n\nGraz is surprisingly diverse — the university draws people from across Europe and beyond. The Lend district has become a creative, multicultural neighborhood. Austria allows dual citizenship in limited cases, and the Red-White-Red Card system for skilled workers is straightforward.`,
+    stats: [
+        { value: '290K', label: 'Population' }, { value: '€2,800', label: 'Avg. Family Monthly' },
+        { value: '26°C', label: 'Avg. Summer High' }, { value: '-2°C', label: 'Avg. Winter Low' },
+        { value: '60K+', label: 'University Students' }, { value: '#19', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 42, color: '#818cf8' }, { name: 'Irreligious', pct: 35, color: '#22d3ee' },
+        { name: 'Muslim', pct: 12, color: '#6ee7b7' }, { name: 'Orthodox', pct: 5, color: '#f97316' },
+        { name: 'Other', pct: 6, color: '#94a3b8' }
+    ],
+    pros: ['UNESCO old town + Schlossberg castle hill','Gemütlichkeit — genuine warmth over coffee and food','Six universities — youthful, international energy','Styrian food culture (Buschenschank, pumpkin seed oil, wine region)','Compact, walkable, excellent trams','More affordable than Vienna or Salzburg','Lend district — creative, multicultural','Wine region 45 min south rivals Tuscany','EU member, good visa infrastructure','Warm café/Beisl culture supports deep conversations'],
+    cons: ['Austrian German needed (dialect heavy)','Cold winters with fog in the basin','Less Mediterranean warmth than southern picks','Dual citizenship complex in Austria','Higher cost than southern/eastern Europe','Smaller international faith community','Can feel provincial compared to Vienna','Limited direct international flights'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€2,300–3,300' },{ label: '2-Bedroom Apartment', value: '€900–1,300' },{ label: 'Groceries (family)', value: '€450–550' },{ label: 'Utilities', value: '€150–220' },{ label: 'Public Transit (tram/bus)', value: '€50/mo' },{ label: 'Dining Out (meal for 2)', value: '€35–50' }],
+    familyLife: `Schlossberg is the family playground — a castle hill in the center of the city with views, playgrounds, and a slide carved into the rock. The Mur River path is perfect for strollers and bikes. Stadtpark is the green heart. Austrian kindergartens are heavily subsidized. The university presence means playgroups, international families, and English-speaking social circles exist naturally. Styrian wine country weekends are a family tradition — Buschenschank taverns welcome kids. The Graz children's museum (FRida & freD) is excellent. Christmas markets in December are magical for families.`,
+    visaInfo: `Austria Red-White-Red Card for skilled workers or self-employed. Remote work possible via freelancer visa (Neue Selbständige). Permanent residency after 5 years. Citizenship after 6-10 years — Austria generally requires renouncing other citizenships, though exceptions exist. EU member. Graz has a Magistrat foreigners' office that handles registrations.`,
+    checklist: ['Research Austria Red-White-Red Card or freelancer visa','Visit Graz in both summer and shoulder season','Walk the old town and climb the Schlossberg','Explore Lend and Jakomini districts for family living','Day trip to Südsteiermark wine region','Check international school options (GIBS, Graz International Bilingual School)','Start German (Austrian dialect different from Hochdeutsch)','Experience Buschenschank culture','Visit FRida & freD children\'s museum','Understand Austrian health insurance (e-card system)']
+},
+
+siracusa: {
+    lat: 37.0755, lng: 15.2866, flag: '🇮🇹', city: 'Siracusa', country: 'Sicily, Italy', rank: 7,
+    population: '120K', familyCost: '€1,900/mo',
+    overview: `The Italian island pick. Siracusa (Syracuse) is a 120K city on Sicily's southeastern coast, anchored by Ortigia — a tiny island old town connected by bridge, surrounded by turquoise water on all sides. It's one of the most beautiful urban settings in the Mediterranean. Ancient Greek ruins sit alongside baroque churches and outdoor fish markets.\n\nSicilian culture is legendary for its warmth — hospitality here isn't polite, it's aggressive. Neighbors will bring you food before you've unpacked. The street food scene (arancini, granita, cannoli) is a daily community ritual. Very affordable — one of the cheapest regions in Western Europe.\n\nSicily has deep Arab, Greek, and Norman heritage, making it one of Italy's most culturally layered places. Your daughter would see diverse faces and hear multiple cultural influences. Italy's DN visa allows dual citizenship — keep your US passport.`,
+    stats: [
+        { value: '120K', label: 'Population' }, { value: '€1,900', label: 'Avg. Family Monthly' },
+        { value: '31°C', label: 'Avg. Summer High' }, { value: 'Ortigia', label: 'Island Old Town' },
+        { value: '€28K', label: 'DN Visa Min/yr' }, { value: '#7', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Catholic', pct: 80, color: '#818cf8' }, { name: 'Irreligious', pct: 12, color: '#22d3ee' },
+        { name: 'Muslim', pct: 3, color: '#6ee7b7' }, { name: 'Protestant', pct: 1, color: '#fbbf24' },
+        { name: 'Other', pct: 4, color: '#94a3b8' }
+    ],
+    pros: ['Ortigia — island old town surrounded by sea','Sicilian warmth — neighbors bring food before you unpack','Ancient Greek + Arab + Norman cultural layers','Incredibly affordable','Street food as daily community ritual','Italy allows dual citizenship','Diverse heritage — your daughter reflected','UNESCO archaeological park in city'],
+    cons: ['Hot dry summers (35°C+)','Sicilian bureaucracy even slower than mainland','Car helpful outside Ortigia','Infrastructure less polished than northern Italy','Limited direct international flights','Italian language essential','Island logistics for mainland travel'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,600–2,200' },{ label: '2-Bedroom Apartment', value: '€500–800' },{ label: 'Groceries (family)', value: '€280–380' },{ label: 'Utilities', value: '€90–140' },{ label: 'Car (helpful)', value: '€150–250' },{ label: 'Dining Out (meal for 2)', value: '€25–35' }],
+    familyLife: `Ortigia is a car-free paradise for kids — narrow streets open to piazzas where children play while parents eat. The sea is everywhere. Sicilian grandmothers will adopt your daughter on sight. Markets (especially the Ortigia market) are daily social events. Public schools are free. The pace of life is Mediterranean slow — long lunches, evening passeggiata, gelato runs. Beach access is excellent along the coast south of the city.`,
+    visaInfo: `Italy Digital Nomad Visa (~€28K/year minimum). Citizenship after 10 years with dual nationality — keep your US passport. Italy also has an elective residence visa for those with passive/remote income.`,
+    checklist: ['Research Italy DN visa or elective residence','Visit Ortigia and walk the market','Explore beaches south of the city','Check international school options (limited — Catania has more)','Start Italian (Sicilian dialect is different but Italian is the school language)','Understand that Sicilian pace means everything takes longer','Plan a scouting trip in spring or fall (avoid August heat)']
+},
+
+
+utrecht: {
+    lat: 52.0907, lng: 5.1214, flag: '🇳🇱', city: 'Utrecht', country: 'Netherlands', rank: 20,
+    population: '360K', familyCost: '€3,100/mo',
+    overview: `~360K around iconic canals. Smaller, warmer, more community-oriented Amsterdam. One of the most bikeable cities on earth. Dutch are direct and welcoming. Village-like feel. Very diverse, extremely tolerant — excellent for mixed-race families. DAFT treaty makes it one of the easiest US visa paths in Europe.`,
+    stats: [
+        { value: '360K', label: 'Population' }, { value: '€3,100', label: 'Avg. Family Monthly' },
+        { value: '22°C', label: 'Avg. Summer High' }, { value: 'A2', label: 'Dutch Needed' },
+        { value: 'Near-total', label: 'English Proficiency' }, { value: '#20', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 62, color: '#22d3ee' }, { name: 'Catholic', pct: 12, color: '#818cf8' },
+        { name: 'Muslim', pct: 10, color: '#6ee7b7' }, { name: 'Protestant', pct: 10, color: '#fbbf24' },
+        { name: 'Other', pct: 6, color: '#94a3b8' }
+    ],
+    pros: ['Most bikeable city on Earth','Village-like feel','Extremely tolerant — great for your family','Near-universal English','DAFT treaty — easiest US business visa','Excellent social safety net','Schiphol nearby'],
+    cons: ['Housing extremely tight','Grey flat rainy','Higher cost of living','Very secular — tiny church community','Dutch directness can feel blunt','No mountains'],
+    costs: [{ label: '2-Bedroom Apartment', value: '€1,500–2,000' },{ label: 'Groceries (family)', value: '€450–550' },{ label: 'Health Insurance (mandatory)', value: '€130–170' },{ label: 'Dining Out (meal for 2)', value: '€40–60' }],
+    familyLife: `Kids ride to school independently. Canal wharf cafés for families. Dutch emphasis on children's independence. Leidsche Rijn designed for families. Free high-quality schools.`,
+    visaInfo: `DAFT treaty: start business with €4,500 capital. Also HSM visa, Self-Employment. Citizenship 5 years (Dutch exam). Dual citizenship complex.`,
+    checklist: ['Research DAFT treaty','Visit Lombok, Wittevrouwen, Leidsche Rijn','Start housing search very early','Understand mandatory health insurance','Get BSN process understood']
+},
+
+turin: {
+    lat: 45.0703, lng: 7.6869, flag: '🇮🇹', city: 'Turin', country: 'Piedmont, Italy', rank: 18,
+    population: '870K', familyCost: '€2,200/mo',
+    overview: `Italy's most underrated major city. Baroque architecture that rivals Paris — 18 km of arcaded walkways so you can walk the entire city center without getting rained on. The Alps are visible from almost everywhere on clear days. Monte dei Cappuccini overlooks the city and the Po River.\n\nTurin is Italy's coffee capital (Lavazza was born here), its chocolate capital (bicerin and gianduja), and arguably its food capital (white truffles, Barolo wine, Piedmontese cuisine). The aperitivo culture is the evening social ritual — generous free food with every drink.\n\nSurprisingly diverse for Italy — large immigrant communities from North Africa, Romania, and South America. The Porta Palazzo market is the largest open-air market in Europe and feels like a mini United Nations. Progressive and culturally open.\n\nNot a tourist city. Locals are proud and warm once you're past the initial Piedmontese reserve. The cost of living is dramatically lower than Milan (90 min by train) while offering similar infrastructure. Italy's DN visa allows dual citizenship — keep your US passport.`,
+    stats: [
+        { value: '870K', label: 'Population' }, { value: '€2,200', label: 'Avg. Family Monthly' },
+        { value: '28°C', label: 'Avg. Summer High' }, { value: '0°C', label: 'Avg. Winter Low' },
+        { value: '90 min', label: 'Train to Milan' }, { value: '#18', label: 'Your Rank' }
+    ],
+    religion: [
+        { name: 'Irreligious', pct: 42, color: '#22d3ee' }, { name: 'Catholic', pct: 40, color: '#818cf8' },
+        { name: 'Muslim', pct: 10, color: '#6ee7b7' }, { name: 'Orthodox', pct: 4, color: '#f97316' },
+        { name: 'Other', pct: 4, color: '#94a3b8' }
+    ],
+    pros: ['18 km of arcaded walkways — walk everywhere rain or shine','Alps visible from the city','Italy\'s coffee and chocolate capital','Porta Palazzo — largest open-air market in Europe','Dramatically cheaper than Milan','Italy allows dual citizenship','Diverse — large immigrant communities','Piedmontese cuisine world-class','Aperitivo culture as evening social ritual','Not a tourist city — genuine community'],
+    cons: ['Larger city (870K) — less village-like','Piedmontese reserve initially','Po Valley fog and pollution in winter','Italian language essential','Italian bureaucracy','Cold winters for Italy','Less beach access (Liguria coast ~2 hr)','Can feel industrial in parts'],
+    costs: [{ label: 'Family Monthly (all-in)', value: '€1,800–2,600' },{ label: '2-Bedroom Apartment', value: '€600–950' },{ label: 'Groceries (family)', value: '€350–450' },{ label: 'Utilities', value: '€120–180' },{ label: 'Public Transit (GTT)', value: '€38/mo' },{ label: 'Dining Out (meal for 2)', value: '€30–45' }],
+    familyLife: `The arcades make Turin one of the most stroller-friendly cities in Europe — 18 km of covered walkways. Valentino Park along the Po River is the family gathering spot: playgrounds, bike paths, the medieval village replica. Porta Palazzo market is a Saturday morning ritual. The Egyptian Museum (second largest in the world) does incredible kids' programs. Skiing in the Alps is a weekend trip. The Piedmontese emphasis on slow food means family meals are sacred. Public schools are free and solid. The Quadrilatero Romano (old Roman quarter) is a walkable family-friendly neighborhood with character.`,
+    visaInfo: `Italy Digital Nomad Visa: ~€28K/year minimum income, valid 1 year (renewable). Elective Residence Visa for passive/remote income also available. Citizenship after 10 years of legal residence — Italy allows dual nationality, keep your US passport. EU member. Turin has a dedicated Sportello Stranieri (foreigners' office) that's more efficient than most Italian cities.`,
+    checklist: ['Research Italy DN visa or elective residence visa','Visit Turin in spring or fall (avoid winter fog)','Walk the arcades from Piazza Castello to Valentino Park','Explore Quadrilatero Romano and San Salvario neighborhoods','Visit Porta Palazzo market on Saturday morning','Day trip to Langhe wine region','Start Italian','Check international school options (American School of Turin, IST)','Experience aperitivo culture in Piazza Vittorio','Understand the Milan connection — 90 min fast train']
+}
+
+}; // end locations
+
+// Wikipedia article titles per city (for media-list API)
+const wikiTitles = {
+    pontevedra: 'Pontevedra', braga: 'Braga', valencia: 'Valencia',
+    santiago_de_compostela: 'Santiago_de_Compostela', bilbao: 'Bilbao', toulouse: 'Toulouse',
+    san_sebastian: 'San_Sebastián', chania: 'Chania', granada: 'Granada',
+    lyon: 'Lyon', ljubljana: 'Ljubljana', lecce: 'Lecce',
+    siracusa: 'Syracuse,_Sicily', rijeka: 'Rijeka', sarajevo: 'Sarajevo',
+    ghent: 'Ghent', nantes: 'Nantes', graz: 'Graz',
+    utrecht: 'Utrecht', turin: 'Turin'
+};
+
+const imageCache = {};
+let galleryInterval = null;
+
+async function fetchCityImages(key) {
+    if (imageCache[key]) return imageCache[key];
+    const title = wikiTitles[key] || locations[key]?.city || key;
+    try {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(title)}`;
+        const res = await fetch(url, { headers: { 'Api-User-Agent': 'EuropeRelocationApp/1.0' } });
+        const data = await res.json();
+        const skip = /logo|icon|flag|coat|emblem|seal|map|diagram|plan|chart|stub|edit|arrow|symbol|\.svg|\.png/i;
+        const imgs = (data.items || [])
+            .filter(i => i.type === 'image' && !skip.test(i.title) && /\.jpe?g$/i.test(i.title))
+            .map(i => {
+                const src = i.srcset?.[0]?.src || '';
+                return src ? 'https:' + src.replace(/\/\d+px-/, '/800px-') : '';
+            })
+            .filter(Boolean)
+            .slice(0, 10);
+        imageCache[key] = imgs;
+        return imgs;
+    } catch (e) {
+        console.error('Gallery fetch failed:', e);
+        return [];
+    }
+}
+
+// Sorted keys by rank
+const sortedKeys = Object.keys(locations).sort((a, b) => locations[a].rank - locations[b].rank);
+
+// — Markers —
+let activeMarker = null;
+const markers = {};
+
+function createMarkerIcon(city, country, rank) {
+    return L.divIcon({
+        className: '',
+        html: `<div class="map-marker">
+            <div class="marker-tooltip">
+                <div class="marker-tooltip-city">${city}</div>
+                <div class="marker-tooltip-country">${country}</div>
+                <div class="marker-tooltip-rank">#${rank} match</div>
+            </div>
+        </div>`,
+        iconSize: [18, 18], iconAnchor: [9, 9]
+    });
+}
+
+Object.entries(locations).forEach(([key, loc]) => {
+    const marker = L.marker([loc.lat, loc.lng], {
+        icon: createMarkerIcon(loc.city, loc.country, loc.rank)
+    }).addTo(map);
+    markers[key] = marker;
+    marker.on('click', () => {
+        closeDrawer();
+        activateMarker(marker);
+        openPanel(key);
+    });
+});
+
+function activateMarker(marker) {
+    if (activeMarker) {
+        const prev = activeMarker.getElement()?.querySelector('.map-marker');
+        if (prev) prev.classList.remove('active');
+    }
+    const el = marker.getElement()?.querySelector('.map-marker');
+    if (el) el.classList.add('active');
+    activeMarker = marker;
+}
+
+// — Right panel —
+const panel = document.getElementById('infoPanel');
+document.getElementById('panelClose').addEventListener('click', closePanel);
+
+function closePanel() {
+    panel.classList.remove('open');
+    if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
+    if (activeMarker) {
+        const el = activeMarker.getElement()?.querySelector('.map-marker');
+        if (el) el.classList.remove('active');
+        activeMarker = null;
+    }
+}
+
+function openPanel(key) {
+    const loc = locations[key];
+    document.getElementById('panelFlag').textContent = loc.flag;
+    document.getElementById('panelCity').textContent = loc.city;
+    document.getElementById('panelCountry').textContent = loc.country;
+    document.getElementById('panelRank').textContent = `#${loc.rank} Overall Match`;
+
+    if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
+
+    document.getElementById('panelBody').innerHTML = `
+        <div class="section"><div class="section-label">At a Glance</div>
+            <div class="stats-grid">${loc.stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('')}</div>
+            <div class="gallery" id="cityGallery" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading photos…</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Overview</div><div class="section-text">${loc.overview.replace(/\n/g,'<br>')}</div></div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Cost of Living</div>
+            <div class="cost-rows">${loc.costs.map(c => `<div class="cost-row"><span class="cost-row-label">${c.label}</span><span class="cost-row-value">${c.value}</span></div>`).join('')}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Religious Demographics</div>
+            <div class="religion-bars">${loc.religion.map(r => `<div class="religion-row"><span class="religion-name">${r.name}</span><div class="religion-bar-track"><div class="religion-bar-fill" style="width:${r.pct}%;background:${r.color};"></div></div><span class="religion-pct">${r.pct}%</span></div>`).join('')}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Pros & Cons</div>
+            <div class="pros-cons">
+                <div class="pros-cons-column pros"><h4>Pros</h4><ul>${loc.pros.map(p => `<li>${p}</li>`).join('')}</ul></div>
+                <div class="pros-cons-column cons"><h4>Cons</h4><ul>${loc.cons.map(c => `<li>${c}</li>`).join('')}</ul></div>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Family Life</div><div class="section-text">${loc.familyLife}</div></div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Visa & Residency</div><div class="section-text">${loc.visaInfo}</div></div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Action Checklist</div>
+            <div class="checklist">${loc.checklist.map(item => `<div class="checklist-item"><div class="checklist-icon"></div><span>${item}</span></div>`).join('')}</div>
+        </div>
+    `;
+    panel.classList.add('open');
+
+    // Gallery async load
+    fetchCityImages(key).then(urls => {
+        const gal = document.getElementById('cityGallery');
+        if (!gal || !urls.length) { if (gal) gal.style.display = 'none'; return; }
+        gal.style = '';
+        gal.innerHTML = urls.map((u, i) => `<img src="${u}" alt="" class="${i === 0 ? 'active' : ''}">`).join('') +
+            `<button class="gallery-arrow left" id="galPrev">&#8249;</button>` +
+            `<button class="gallery-arrow right" id="galNext">&#8250;</button>` +
+            `<div class="gallery-counter"><span id="galIdx">1</span> / ${urls.length}</div>` +
+            `<div class="gallery-dots">${urls.map((_, i) => `<div class="gallery-dot${i === 0 ? ' active' : ''}" data-i="${i}"></div>`).join('')}</div>`;
+        let galCur = 0;
+        const imgs = gal.querySelectorAll('img');
+        const dots = gal.querySelectorAll('.gallery-dot');
+        const counter = document.getElementById('galIdx');
+        function showSlide(n) {
+            imgs.forEach((img, i) => img.classList.toggle('active', i === n));
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === n));
+            if (counter) counter.textContent = n + 1;
+        }
+        dots.forEach(dot => dot.addEventListener('click', (e) => {
+            galCur = parseInt(e.target.dataset.i);
+            showSlide(galCur);
+        }));
+        document.getElementById('galPrev').addEventListener('click', () => {
+            galCur = (galCur - 1 + urls.length) % urls.length;
+            showSlide(galCur);
+        });
+        document.getElementById('galNext').addEventListener('click', () => {
+            galCur = (galCur + 1) % urls.length;
+            showSlide(galCur);
+        });
+        galleryInterval = setInterval(() => {
+            galCur = (galCur + 1) % urls.length;
+            showSlide(galCur);
+        }, 3500);
+    });
+}
+
+// — Left drawer (Compare All) —
+const drawer = document.getElementById('compareDrawer');
+const overlay = document.getElementById('drawerOverlay');
+const drawerList = document.getElementById('drawerList');
+
+document.getElementById('compareBtn').addEventListener('click', openDrawer);
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel(); closeDrawer(); } });
+map.on('click', () => { closePanel(); closeDrawer(); });
+
+function closeDrawer() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('visible');
+}
+
+function openDrawer() {
+    closePanel();
+    drawerList.innerHTML = sortedKeys.map(key => {
+        const loc = locations[key];
+        const topPros = loc.pros.slice(0, 3).join(' · ');
+        const topCons = loc.cons.slice(0, 2).join(' · ');
+        return `
+        <div class="compare-card" data-key="${key}">
+            <div class="cc-top">
+                <div class="cc-city-info">
+                    <div class="cc-rank ${loc.rank <= 3 ? 'top3' : 'rest'}">${loc.rank}</div>
+                    <span class="cc-flag">${loc.flag}</span>
+                    <div>
+                        <div class="cc-name">${loc.city}</div>
+                        <div class="cc-country">${loc.country}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cc-stats">
+                <div><div class="cc-stat-label">Population</div><div class="cc-stat-value">${loc.population}</div></div>
+                <div><div class="cc-stat-label">Family Cost</div><div class="cc-stat-value">${loc.familyCost}</div></div>
+            </div>
+            <div class="cc-religion">${loc.religion.map(r => `<div class="cc-religion-seg" style="width:${r.pct}%;background:${r.color};"></div>`).join('')}</div>
+            <div class="cc-religion-legend">${loc.religion.map(r => `<span class="cc-religion-legend-item"><span class="cc-religion-dot" style="background:${r.color}"></span>${r.name} ${r.pct}%</span>`).join('')}</div>
+            <div class="cc-proscons">
+                <div class="cc-proscons-col pros"><strong>Pros</strong><br>${topPros}</div>
+                <div class="cc-proscons-col cons"><strong>Cons</strong><br>${topCons}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Click cards to open detail
+    drawerList.querySelectorAll('.compare-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const key = card.dataset.key;
+            closeDrawer();
+            activateMarker(markers[key]);
+            openPanel(key);
+        });
+    });
+
+    drawer.classList.add('open');
+    overlay.classList.add('visible');
+}
+</script>
+</body>
+</html>
