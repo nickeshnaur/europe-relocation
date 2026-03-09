@@ -58,13 +58,15 @@
         .panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .panel-flag { font-size: 36px; margin-bottom: 8px; }
         .panel-city { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
-        .panel-country { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .panel-pop { font-size: 12px; color: rgba(255,255,255,0.35); text-transform: none; letter-spacing: 0; font-weight: 400; }
-        .panel-nav { display: flex; gap: 8px; margin-top: 12px; }
-        .panel-nav-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.5); font-size: 13px; padding: 6px 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-        .panel-nav-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
-        .panel-nav-btn:disabled { opacity: 0.3; cursor: default; }
-        .panel-nav-btn:disabled:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+        .panel-subtitle-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+        .panel-country-text { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.4); }
+        .panel-pop-pill { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 2px 10px; border-radius: 12px; }
+        .panel-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+        .panel-nav-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 22px; cursor: pointer; transition: color 0.2s; padding: 4px 8px; line-height: 1; }
+        .panel-nav-btn:hover { color: #a5b4fc; }
+        .panel-nav-btn:disabled { opacity: 0.15; cursor: default; }
+        .panel-nav-btn:disabled:hover { color: rgba(255,255,255,0.35); }
+        .panel-nav-label { font-size: 11px; color: rgba(255,255,255,0.25); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
         .panel-rank-badge {
             display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 12px;
             background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
@@ -81,6 +83,7 @@
         .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 16px; }
         .stat-value { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
         .stat-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; font-weight: 500; }
+        .stat-sub { font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 3px; font-weight: 400; }
 
         .religion-bars { display: flex; flex-direction: column; gap: 10px; }
         .religion-row { display: flex; align-items: center; gap: 12px; }
@@ -255,11 +258,15 @@
         <button class="panel-close" id="panelClose">×</button>
         <div class="panel-flag" id="panelFlag"></div>
         <div class="panel-city" id="panelCity"></div>
-        <div class="panel-country"><span id="panelCountry"></span><span class="panel-pop" id="panelPop"></span></div>
+        <div class="panel-subtitle-row">
+            <span class="panel-country-text" id="panelCountry"></span>
+            <span class="panel-pop-pill" id="panelPop"></span>
+        </div>
         <div class="panel-rank-badge" id="panelRank"></div>
         <div class="panel-nav">
-            <button class="panel-nav-btn" id="panelPrev">&#8249; Prev</button>
-            <button class="panel-nav-btn" id="panelNext">Next &#8250;</button>
+            <button class="panel-nav-btn" id="panelPrev">&#8592;</button>
+            <span class="panel-nav-label" id="panelNavLabel"></span>
+            <button class="panel-nav-btn" id="panelNext">&#8594;</button>
         </div>
     </div>
     <div class="panel-body" id="panelBody"></div>
@@ -853,23 +860,31 @@ function openPanel(key) {
     const nextBtn = document.getElementById('panelNext');
     prevBtn.disabled = idx <= 0;
     nextBtn.disabled = idx >= sortedKeys.length - 1;
+    document.getElementById('panelNavLabel').textContent = `${idx + 1} of ${sortedKeys.length}`;
     prevBtn.onclick = () => { if (idx > 0) { const k = sortedKeys[idx - 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
     nextBtn.onclick = () => { if (idx < sortedKeys.length - 1) { const k = sortedKeys[idx + 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
 
     if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
 
+    const protestant = loc.religion.find(r => r.name === 'Protestant');
+    const protPct = protestant ? `${protestant.pct}%` : '<1%';
+
+    const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
+    const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
+    const fam6 = '$' + Math.round(baseCost * 1.4).toLocaleString() + '/mo';
+
     const stats = [
-        { value: loc.taxMonthly, label: 'Take-Home / Mo' },
-        { value: loc.familyCost, label: 'Family Cost / Mo' },
+        { value: loc.taxMonthly, label: 'Take-Home on $100K' },
+        { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
         { value: loc.summerHigh, label: 'Summer High' },
         { value: loc.winterLow, label: 'Winter Low' },
         { value: loc.beach, label: 'Beach / Coast' },
-        { value: `#${loc.rank}`, label: 'Your Match Rank' }
+        { value: protPct, label: 'Protestant' }
     ];
 
     document.getElementById('panelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
-            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('')}</div>
+            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
             <div class="gallery" id="cityGallery" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading photos…</div>
         </div>
         <div class="divider"></div>
