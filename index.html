@@ -915,16 +915,16 @@ function openPanel(key) {
     const stats = [
         { value: loc.taxMonthly, label: 'Take-Home on $100K' },
         { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
-        { value: loc.summerHigh, label: 'Summer High' },
-        { value: loc.winterLow, label: 'Winter Low' },
         { value: loc.beach, label: 'Beach / Coast' }
     ];
 
+    const weatherHtml = `<div class="stat-card"><div style="display:flex;justify-content:space-around;text-align:center;"><div><div class="stat-value">☀️ ${loc.summerHigh}</div><div class="stat-label">Summer Avg</div></div><div><div class="stat-value">❄️ ${loc.winterLow}</div><div class="stat-label">Winter Avg</div></div></div></div>`;
     const religionBar = renderReligionBar(loc.religion);
 
     document.getElementById('panelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
             <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            ${weatherHtml}
             <div class="stat-card" style="margin-top:10px;">${religionBar}</div>
             <div class="gallery" id="cityGallery" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading photos…</div>
         </div>
@@ -1103,16 +1103,16 @@ function populateLAPanel() {
     const stats = [
         { value: loc.taxMonthly, label: 'Take-Home on $100K' },
         { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
-        { value: loc.summerHigh, label: 'Summer High' },
-        { value: loc.winterLow, label: 'Winter Low' },
         { value: loc.beach, label: 'Beach / Coast' }
     ];
 
+    const weatherHtml = `<div class="stat-card"><div style="display:flex;justify-content:space-around;text-align:center;"><div><div class="stat-value">☀️ ${loc.summerHigh}</div><div class="stat-label">Summer Avg</div></div><div><div class="stat-value">❄️ ${loc.winterLow}</div><div class="stat-label">Winter Avg</div></div></div></div>`;
     const religionBar = renderReligionBar(loc.religion);
 
     document.getElementById('laPanelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
             <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            ${weatherHtml}
             <div class="stat-card" style="margin-top:10px;">${religionBar}</div>
         </div>
         <div class="divider"></div>
