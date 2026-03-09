@@ -58,7 +58,13 @@
         .panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .panel-flag { font-size: 36px; margin-bottom: 8px; }
         .panel-city { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
-        .panel-country { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+        .panel-country { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .panel-pop { font-size: 12px; color: rgba(255,255,255,0.35); text-transform: none; letter-spacing: 0; font-weight: 400; }
+        .panel-nav { display: flex; gap: 8px; margin-top: 12px; }
+        .panel-nav-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.5); font-size: 13px; padding: 6px 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .panel-nav-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
+        .panel-nav-btn:disabled { opacity: 0.3; cursor: default; }
+        .panel-nav-btn:disabled:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
         .panel-rank-badge {
             display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 12px;
             background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
@@ -249,9 +255,12 @@
         <button class="panel-close" id="panelClose">×</button>
         <div class="panel-flag" id="panelFlag"></div>
         <div class="panel-city" id="panelCity"></div>
-        <div class="panel-country" id="panelCountry"></div>
+        <div class="panel-country"><span id="panelCountry"></span><span class="panel-pop" id="panelPop"></span></div>
         <div class="panel-rank-badge" id="panelRank"></div>
-        <div class="panel-pop" id="panelPop" style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;"></div>
+        <div class="panel-nav">
+            <button class="panel-nav-btn" id="panelPrev">&#8249; Prev</button>
+            <button class="panel-nav-btn" id="panelNext">Next &#8250;</button>
+        </div>
     </div>
     <div class="panel-body" id="panelBody"></div>
 </div>
@@ -562,7 +571,7 @@ valencia: {
 
 san_sebastian: {
     lat: 43.3183, lng: -1.9812, flag: '🇪🇸', city: 'San Sebastián', country: 'Basque Country, Spain', rank: 14,
-    population: '188K', familyCost: '$3,200/mo', summerHigh: '24°C', winterLow: '4°C', beach: 'In city',
+    population: '188K', familyCost: '$4,400/mo', summerHigh: '24°C', winterLow: '4°C', beach: 'In city',
     overview: `By many measures the most beautiful city in Spain. Three beaches between forested headlands, unmatched food scene per capita. Basque identity is exactly the Atlantic/Celtic depth you described. Txokos and pintxos culture builds deep community. 30%+ residents born outside Spain. The dream lifestyle pick if budget allows.`,
     religion: [
         { name: 'Irreligious', pct: 60, color: '#22d3ee' }, { name: 'Catholic', pct: 33, color: '#818cf8' },
@@ -673,7 +682,7 @@ rijeka: {
 
 lyon: {
     lat: 45.764, lng: 4.8357, flag: '🇫🇷', city: 'Lyon', country: 'France', rank: 19,
-    population: '516K', familyCost: '$3,200/mo', summerHigh: '27°C', winterLow: '0°C', beach: '3+ hours',
+    population: '516K', familyCost: '$3,500/mo', summerHigh: '27°C', winterLow: '0°C', beach: '3+ hours',
     overview: `Two rivers (Rhône and Saône) converge here. Distinct, walkable neighborhoods. France's food capital — bouchon culture means regulars treated like family. Excellent metro/tram/bike-share. More diverse and cosmopolitan than Toulouse. Progressive, family-friendly, deep civic pride.`,
     religion: [
         { name: 'Irreligious', pct: 50, color: '#22d3ee' }, { name: 'Catholic', pct: 28, color: '#818cf8' },
@@ -828,13 +837,24 @@ function visaIcon(ok) {
     return '<span class="visa-check partial">~</span>';
 }
 
+let currentPanelKey = null;
+
 function openPanel(key) {
+    currentPanelKey = key;
     const loc = locations[key];
+    const idx = sortedKeys.indexOf(key);
     document.getElementById('panelFlag').textContent = loc.flag;
     document.getElementById('panelCity').textContent = loc.city;
     document.getElementById('panelCountry').textContent = loc.country;
+    document.getElementById('panelPop').textContent = loc.population;
     document.getElementById('panelRank').textContent = `#${loc.rank} Overall Match`;
-    document.getElementById('panelPop').textContent = `Population: ${loc.population}`;
+
+    const prevBtn = document.getElementById('panelPrev');
+    const nextBtn = document.getElementById('panelNext');
+    prevBtn.disabled = idx <= 0;
+    nextBtn.disabled = idx >= sortedKeys.length - 1;
+    prevBtn.onclick = () => { if (idx > 0) { const k = sortedKeys[idx - 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
+    nextBtn.onclick = () => { if (idx < sortedKeys.length - 1) { const k = sortedKeys[idx + 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
 
     if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
 
