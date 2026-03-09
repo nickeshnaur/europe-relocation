@@ -82,6 +82,7 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 16px; }
         .stat-value { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+        .stat-value-sm { font-size: 13px; font-weight: 600; line-height: 1.4; }
         .stat-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; font-weight: 500; }
         .stat-sub { font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 3px; font-weight: 400; }
 
@@ -866,8 +867,7 @@ function openPanel(key) {
 
     if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
 
-    const protestant = loc.religion.find(r => r.name === 'Protestant');
-    const protPct = protestant ? `${protestant.pct}%` : '<1%';
+    const topReligions = loc.religion.slice(0, 2).map(r => `${r.name} ${r.pct}%`).join(', ');
 
     const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
     const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
@@ -879,12 +879,12 @@ function openPanel(key) {
         { value: loc.summerHigh, label: 'Summer High' },
         { value: loc.winterLow, label: 'Winter Low' },
         { value: loc.beach, label: 'Beach / Coast' },
-        { value: protPct, label: 'Protestant' }
+        { value: topReligions, label: 'Top Religions', small: true }
     ];
 
     document.getElementById('panelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
-            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value${s.small ? ' stat-value-sm' : ''}">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
             <div class="gallery" id="cityGallery" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading photos…</div>
         </div>
         <div class="divider"></div>
