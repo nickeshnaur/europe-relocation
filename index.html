@@ -74,6 +74,17 @@
             transition: all 0.2s; display: flex; align-items: center; gap: 8px;
         }
         .la-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+        .la-panel {
+            position: fixed; top: 0; left: -500px; width: 500px; height: 100vh;
+            background: rgba(15,15,20,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            z-index: 1000; transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .la-panel.open { left: 0; }
+        .la-panel::-webkit-scrollbar { width: 4px; }
+        .la-panel::-webkit-scrollbar-track { background: transparent; }
+        .la-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         .panel-rank-badge {
             display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 12px;
             background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
@@ -226,6 +237,7 @@
         @media (max-width: 600px) {
             .info-panel { width: 100vw; right: -100vw; }
             .compare-drawer { width: 100vw; left: -100vw; }
+            .la-panel { width: 100vw; left: -100vw; }
             .panel-header, .drawer-header { padding: 24px 20px 16px; }
             .panel-body { padding: 8px 20px 40px; }
             .drawer-list { padding: 12px 12px 40px; }
@@ -260,6 +272,22 @@
 </button>
 
 <button class="la-btn" id="laBtn">🇺🇸 Compare with LA</button>
+
+<div class="la-panel" id="laPanel">
+    <div class="panel-header">
+        <div class="panel-header-controls">
+            <button class="panel-ctrl-btn" id="laPanelClose">×</button>
+        </div>
+        <div class="panel-flag">🇺🇸</div>
+        <div class="panel-city">Los Angeles</div>
+        <div class="panel-subtitle-row">
+            <span class="panel-country-text">California, USA</span>
+            <span class="panel-pop-pill">3.9M</span>
+        </div>
+        <div class="panel-rank-badge">Home Base</div>
+    </div>
+    <div class="panel-body" id="laPanelBody"></div>
+</div>
 
 <div id="map"></div>
 
@@ -976,7 +1004,7 @@ const drawerList = document.getElementById('drawerList');
 document.getElementById('compareBtn').addEventListener('click', openDrawer);
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 overlay.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel(); closeDrawer(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel(); closeDrawer(); laPanel.classList.remove('open'); } });
 map.on('click', () => { closePanel(); closeDrawer(); });
 
 function closeDrawer() {
@@ -1058,22 +1086,10 @@ const laData = {
     ]
 };
 
-document.getElementById('laBtn').addEventListener('click', () => {
-    closeDrawer();
+const laPanel = document.getElementById('laPanel');
+
+function populateLAPanel() {
     const loc = laData;
-    document.getElementById('panelFlag').textContent = loc.flag;
-    document.getElementById('panelCity').textContent = loc.city;
-    document.getElementById('panelCountry').textContent = loc.country;
-    document.getElementById('panelPop').textContent = loc.population;
-    document.getElementById('panelRank').textContent = 'Home Base';
-
-    const prevBtn = document.getElementById('panelPrev');
-    const nextBtn = document.getElementById('panelNext');
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
-
-    if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
-
     const topReligions = loc.religion.slice(0, 2).map(r => `${r.name} ${r.pct}%`).join(', ');
     const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
     const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
@@ -1088,7 +1104,7 @@ document.getElementById('laBtn').addEventListener('click', () => {
         { value: topReligions, label: 'Top Religions', small: true }
     ];
 
-    document.getElementById('panelBody').innerHTML = `
+    document.getElementById('laPanelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
             <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value${s.small ? ' stat-value-sm' : ''}">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
         </div>
@@ -1120,7 +1136,16 @@ document.getElementById('laBtn').addEventListener('click', () => {
         <div class="divider"></div>
         <div class="section"><div class="section-label">Family Life</div><div class="section-text">${loc.familyLife}</div></div>
     `;
-    panel.classList.add('open');
+}
+
+document.getElementById('laBtn').addEventListener('click', () => {
+    closeDrawer();
+    populateLAPanel();
+    laPanel.classList.add('open');
+});
+
+document.getElementById('laPanelClose').addEventListener('click', () => {
+    laPanel.classList.remove('open');
 });
 </script>
 </body>
