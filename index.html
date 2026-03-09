@@ -919,7 +919,7 @@ function openPanel(key) {
 
     const weatherBeachHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
         <div class="stat-card" style="margin:0;"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;"><div><span class="stat-value">☀️ ${loc.summerHigh}</span></div><div><span class="stat-value">❄️ ${loc.winterLow}</span></div></div></div>
-        <div class="stat-card" style="margin:0;"><div style="display:flex;flex-direction:column;gap:6px;text-align:center;"><div><span class="stat-value" style="font-size:13px;">🚗 ${loc.beach}</span></div><div><span class="stat-value" style="font-size:13px;">🚆 ${loc.beachTrain || loc.beach}</span></div></div></div>
+        <div class="stat-card" style="margin:0;display:flex;align-items:center;justify-content:center;"><div style="display:flex;flex-direction:column;gap:6px;text-align:center;"><div><span class="stat-value" style="font-size:13px;">🚗 ${loc.beach}</span></div><div><span class="stat-value" style="font-size:13px;">🚆 ${loc.beachTrain || loc.beach}</span></div></div></div>
     </div>`;
     const religionBar = renderReligionBar(loc.religion);
 
@@ -1109,7 +1109,7 @@ function populateLAPanel() {
 
     const weatherBeachHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
         <div class="stat-card" style="margin:0;"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;"><div><span class="stat-value">☀️ ${loc.summerHigh}</span></div><div><span class="stat-value">❄️ ${loc.winterLow}</span></div></div></div>
-        <div class="stat-card" style="margin:0;"><div style="display:flex;flex-direction:column;gap:6px;text-align:center;"><div><span class="stat-value" style="font-size:13px;">🚗 ${loc.beach}</span></div><div><span class="stat-value" style="font-size:13px;">🚆 ${loc.beachTrain || loc.beach}</span></div></div></div>
+        <div class="stat-card" style="margin:0;display:flex;align-items:center;justify-content:center;"><div style="display:flex;flex-direction:column;gap:6px;text-align:center;"><div><span class="stat-value" style="font-size:13px;">🚗 ${loc.beach}</span></div><div><span class="stat-value" style="font-size:13px;">🚆 ${loc.beachTrain || loc.beach}</span></div></div></div>
     </div>`;
     const religionBar = renderReligionBar(loc.religion);
 
