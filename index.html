@@ -67,7 +67,7 @@
         .panel-country-text { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.4); }
         .panel-pop-pill { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 2px 10px; border-radius: 12px; }
         .la-btn {
-            position: fixed; bottom: 24px; right: 24px; z-index: 999;
+            position: fixed; bottom: 24px; left: 24px; z-index: 999;
             background: rgba(15,15,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 18px;
             color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; cursor: pointer;
@@ -342,7 +342,7 @@ const locations = {
 
 granada: {
     lat: 37.1773, lng: -3.5986, flag: '🇪🇸', city: 'Granada', country: 'Spain', rank: 1,
-    population: '230K', familyCost: '$2,100/mo', summerHigh: '34°C', winterLow: '2°C', beach: '45 min drive',
+    population: '230K', familyCost: '$2,100/mo', summerHigh: '93°F', winterLow: '36°F', beach: '45 min drive',
     overview: `~230K at the foot of the Sierra Nevada. Deep Moorish and North African heritage — one of Spain's most culturally diverse cities. Your daughter would see herself reflected everywhere. Albaicín has village-like community. Cheapest city in Western Europe. Legendary free-tapas culture designed to build community. People are exceptionally warm. The Alhambra is in your city.`,
     religion: [
         { name: 'Irreligious', pct: 52, color: '#22d3ee' }, { name: 'Catholic', pct: 40, color: '#818cf8' },
@@ -350,7 +350,7 @@ granada: {
         { name: 'Protestant', pct: 1, color: '#fbbf24' }
     ],
     pros: ['Cheapest city in Western Europe','Moorish heritage — culturally diverse','Daughter would see herself everywhere','Free tapas builds community','Exceptionally warm people','Albaicín — village-like tight-knit','Sierra Nevada skiing/hiking','Alhambra in your city'],
-    cons: ['Limited job market','Beach 45 min away','Summer heat extreme (40°C+)','Less international infrastructure','Can feel isolated','Limited international flights'],
+    cons: ['Limited job market','Beach 45 min away','Summer heat extreme (104°F+)','Less international infrastructure','Can feel isolated','Limited international flights'],
     costs: [{ label: '2-Bedroom Apartment', value: '$550–900' },{ label: 'Groceries (family)', value: '$320–420' },{ label: 'Utilities', value: '$100–150' },{ label: 'Dining Out (meal for 2)', value: '$20–35' }],
     familyLife: `Everything walkable, neighbors know each other. Free tapas is social ritual. Albaicín is UNESCO village inside a city. Sierra Nevada for skiing/hiking. Barista knows your name in a week.`,
     visaDetails: spainVisa,
@@ -360,7 +360,7 @@ granada: {
 
 sarajevo: {
     lat: 43.8563, lng: 18.4131, flag: '🇧🇦', city: 'Sarajevo', country: 'Bosnia & Herzegovina', rank: 2,
-    population: '280K', familyCost: '$1,800/mo', summerHigh: '27°C', winterLow: '-1°C', beach: '4+ hours',
+    population: '280K', familyCost: '$1,800/mo', summerHigh: '81°F', winterLow: '30°F', beach: '4+ hours',
     overview: `The most religiously diverse city in Europe — mosques, Orthodox churches, Catholic cathedrals, and a historic synagogue within a 5-minute walk. Faith is lived openly and pluralistically here.\n\nTwo cities in one: the Ottoman old town (Baščaršija) and the Austro-Hungarian new town. Both walkable and alive.\n\nKafana culture is the social backbone — neighbors sit for hours over Bosnian coffee. Community is the default. Bosnians will feed you before they know your name.\n\nSurrounded by mountains. Skiing 20 minutes from center (1984 Winter Olympics). Very affordable. Not EU, but safe and increasingly connected.`,
     religion: [
         { name: 'Muslim', pct: 45, color: '#6ee7b7' }, { name: 'Orthodox', pct: 30, color: '#818cf8' },
@@ -385,7 +385,7 @@ sarajevo: {
 
 pontevedra: {
     lat: 42.431, lng: -8.644, flag: '🇪🇸', city: 'Pontevedra', country: 'Galicia, Spain', rank: 3,
-    population: '83K', familyCost: '$2,400/mo', summerHigh: '20°C', winterLow: '8°C', beach: '20 min drive',
+    population: '83K', familyCost: '$2,400/mo', summerHigh: '68°F', winterLow: '46°F', beach: '20 min drive',
     overview: `This is your city. 83,000 people in green, Celtic-influenced Galicia that literally redesigned itself around children and pedestrians. In 1999, the mayor banned cars from the center and rebuilt public space from the sightline of a kid. Kids play in the streets until dark while parents sit at cafés.\n\nGalicia is the greenest region in Spain — lush Atlantic forests, river valleys, and vineyards. Beaches 20–30 minutes away. Mild year-round, though winters are wet. ~30% speak Galician alongside Spanish.\n\nFor church planting, Galicia is deeply post-Catholic. The spiritual soil is open.`,
     religion: [
         { name: 'Irreligious', pct: 48, color: '#22d3ee' }, { name: 'Catholic', pct: 45, color: '#818cf8' },
@@ -403,7 +403,7 @@ pontevedra: {
 
 braga: {
     lat: 41.5518, lng: -8.4229, flag: '🇵🇹', city: 'Braga', country: 'Portugal', rank: 4,
-    population: '180K', familyCost: '$2,600/mo', summerHigh: '25°C', winterLow: '5°C', beach: '40 min drive',
+    population: '180K', familyCost: '$2,600/mo', summerHigh: '77°F', winterLow: '41°F', beach: '40 min drive',
     overview: `Portugal's third-largest city feels like a large town — compact, walkable, stunning baroque old quarter. Named Best European Destination in 2021. University of Minho brings youthful energy. Train to Porto under 45 min. Peneda-Gerês National Park less than an hour.\n\nPortugal's D8 visa is the strongest pathway: citizenship in just 5 years while keeping your US passport. That's half the time Spain requires, with no renunciation.`,
     religion: [
         { name: 'Catholic', pct: 65, color: '#818cf8' }, { name: 'Irreligious', pct: 25, color: '#22d3ee' },
@@ -428,7 +428,7 @@ braga: {
 
 tirana: {
     lat: 41.3275, lng: 19.8187, flag: '🇦🇱', city: 'Tirana', country: 'Albania', rank: 5,
-    population: '760K', familyCost: '$2,400/mo', summerHigh: '33°C', winterLow: '3°C', beach: '40 min drive',
+    population: '760K', familyCost: '$2,400/mo', summerHigh: '91°F', winterLow: '37°F', beach: '40 min drive',
     overview: `Albania's capital, 760K people, is Europe's most surprising city. Post-communist concrete turned into a canvas of color — every building painted in wild pastels and geometric patterns. Blloku district (once reserved for Politburo elites) is now the city's café and nightlife hub.\n\nThe fastest-growing evangelical scene in Europe. Since communism fell in 1991, ~200 churches have been planted. The spiritual soil is uniquely open — Albania was the world's first officially atheist state (1967–1991), and people are genuinely searching. US citizens get 1 year visa-free. Dual citizenship allowed. Incredibly affordable.`,
     religion: [
         { name: 'Muslim', pct: 46, color: '#6ee7b7' }, { name: 'Irreligious', pct: 17, color: '#22d3ee' },
@@ -454,7 +454,7 @@ tirana: {
 
 lecce: {
     lat: 40.3516, lng: 18.1718, flag: '🇮🇹', city: 'Lecce', country: 'Puglia, Italy', rank: 6,
-    population: '95K', familyCost: '$2,200/mo', summerHigh: '31°C', winterLow: '5°C', beach: '10 min',
+    population: '95K', familyCost: '$2,200/mo', summerHigh: '88°F', winterLow: '41°F', beach: '10 min',
     overview: `"The Florence of the South" — 95K in extraordinary baroque architecture. Passeggiata (evening stroll) is a daily ritual. 80% of expats report positive interactions. Piazza culture: café mornings, kids playing, long slow socializing. Beaches 10 min. Puglia cuisine is legendary. Italy allows dual citizenship.`,
     religion: [
         { name: 'Catholic', pct: 55, color: '#818cf8' }, { name: 'Irreligious', pct: 35, color: '#22d3ee' },
@@ -472,7 +472,7 @@ lecce: {
 
 santiago: {
     lat: 42.8782, lng: -8.5448, flag: '🇪🇸', city: 'Santiago de Compostela', country: 'Galicia, Spain', rank: 7,
-    population: '100K', familyCost: '$2,400/mo', summerHigh: '22°C', winterLow: '5°C', beach: '40 min drive',
+    population: '100K', familyCost: '$2,400/mo', summerHigh: '72°F', winterLow: '41°F', beach: '40 min drive',
     overview: `A city built around welcoming strangers for over a thousand years. ~100,000 people, UNESCO World Heritage granite old town, working university city (40,000+ students).\n\nThe spiritual landscape is fascinating: the cathedral draws millions of pilgrims, but practicing faith is largely ceremonial. Many pilgrims arrive with deep spiritual questions and no church community. Unique church-planting opening.`,
     religion: [
         { name: 'Catholic', pct: 48, color: '#818cf8' }, { name: 'Irreligious', pct: 44, color: '#22d3ee' },
@@ -490,7 +490,7 @@ santiago: {
 
 palermo: {
     lat: 38.1157, lng: 13.3615, flag: '🇮🇹', city: 'Palermo', country: 'Sicily, Italy', rank: 8,
-    population: '626K', familyCost: '$2,400/mo', summerHigh: '30°C', winterLow: '10°C', beach: 'In city (Mondello 20 min)',
+    population: '626K', familyCost: '$2,400/mo', summerHigh: '86°F', winterLow: '50°F', beach: 'In city (Mondello 20 min)',
     overview: `Sicily's capital, 626K people, is a glorious beautiful mess. Arab-Norman palaces next to crumbling baroque churches next to street markets that haven't changed in 1,000 years. Ballarò, Vucciria, and Capo markets are the city's living rooms.\n\nStreet food capital of Europe — arancini, panelle, sfincione everywhere for $1–2. UNESCO Arab-Norman heritage (Palazzo dei Normanni, Cappella Palatina, Cathedral). The city is raw, loud, chaotic, and deeply human. Mondello Beach is 20 min away — white sand, turquoise water, Monte Pellegrino backdrop. Italy allows dual citizenship.`,
     religion: [
         { name: 'Catholic', pct: 80, color: '#818cf8' }, { name: 'Irreligious', pct: 13, color: '#22d3ee' },
@@ -498,7 +498,7 @@ palermo: {
         { name: 'Other', pct: 3, color: '#94a3b8' }
     ],
     pros: ['Street food capital of Europe','Arab-Norman UNESCO heritage','Beach in the city (Mondello)','Incredibly affordable for a major city','Raw, authentic, deeply human atmosphere','Italy allows dual citizenship','Massive cultural depth — 3,000 years','Gateway to all of Sicily','Warm year-round'],
-    cons: ['Chaotic infrastructure and traffic','Bureaucracy — it\'s still Italy, amplified','Organized crime legacy (much improved)','Italian essential — less English than north','Southern Italian pace may frustrate','Summer heat 30°C+'],
+    cons: ['Chaotic infrastructure and traffic','Bureaucracy — it\'s still Italy, amplified','Organized crime legacy (much improved)','Italian essential — less English than north','Southern Italian pace may frustrate','Summer heat 86°F+'],
     costs: [{ label: '2-Bedroom Apartment', value: '$500–900' },{ label: 'Groceries (family)', value: '$350–450' },{ label: 'Utilities', value: '$120–180' },{ label: 'Dining Out (meal for 2)', value: '$25–35' }],
     familyLife: `Sicilian family culture is legendary — kids are everyone's kids. Mondello Beach is the family weekend ritual. Villa Giulia and Giardino Inglese for everyday park time. Street food makes feeding kids effortless and cheap. Public schools teach Italian + some Sicilian dialect exposure.`,
     visaDetails: italyVisa,
@@ -508,7 +508,7 @@ palermo: {
 
 siracusa: {
     lat: 37.0755, lng: 15.2866, flag: '🇮🇹', city: 'Siracusa', country: 'Sicily, Italy', rank: 9,
-    population: '120K', familyCost: '$2,100/mo', summerHigh: '31°C', winterLow: '8°C', beach: 'In city',
+    population: '120K', familyCost: '$2,100/mo', summerHigh: '88°F', winterLow: '46°F', beach: 'In city',
     overview: `120K on Sicily's southeastern coast, anchored by Ortigia — a tiny island old town surrounded by turquoise water. One of the most beautiful urban settings in the Mediterranean.\n\nSicilian warmth isn't polite — it's aggressive. Neighbors bring food before you've unpacked. Very affordable. Deep Arab, Greek, and Norman heritage. Your daughter would see diverse faces everywhere. Italy allows dual citizenship.`,
     religion: [
         { name: 'Catholic', pct: 80, color: '#818cf8' }, { name: 'Irreligious', pct: 12, color: '#22d3ee' },
@@ -516,7 +516,7 @@ siracusa: {
         { name: 'Other', pct: 4, color: '#94a3b8' }
     ],
     pros: ['Ortigia — island old town surrounded by sea','Sicilian warmth — neighbors bring food before you unpack','Ancient Greek + Arab + Norman layers','Incredibly affordable','Street food as daily community ritual','Dual citizenship OK','Diverse heritage'],
-    cons: ['Hot dry summers (35°C+)','Sicilian bureaucracy slower than mainland','Car helpful outside Ortigia','Infrastructure less polished','Limited direct flights','Italian essential'],
+    cons: ['Hot dry summers (95°F+)','Sicilian bureaucracy slower than mainland','Car helpful outside Ortigia','Infrastructure less polished','Limited direct flights','Italian essential'],
     costs: [{ label: '2-Bedroom Apartment', value: '$500–800' },{ label: 'Groceries (family)', value: '$280–380' },{ label: 'Utilities', value: '$90–140' },{ label: 'Car (helpful)', value: '$150–250' },{ label: 'Dining Out (meal for 2)', value: '$25–35' }],
     familyLife: `Ortigia is car-free paradise for kids. The sea is everywhere. Sicilian grandmothers will adopt your daughter on sight. Markets are daily social events. Mediterranean slow pace.`,
     visaDetails: italyVisa,
@@ -526,7 +526,7 @@ siracusa: {
 
 bilbao: {
     lat: 43.263, lng: -2.935, flag: '🇪🇸', city: 'Bilbao', country: 'Basque Country, Spain', rank: 11,
-    population: '350K', familyCost: '$2,800/mo', summerHigh: '25°C', winterLow: '5°C', beach: '20 min metro',
+    population: '350K', familyCost: '$2,800/mo', summerHigh: '77°F', winterLow: '41°F', beach: '20 min metro',
     overview: `~350K with arguably the warmest community culture in all of Europe. Basque culture is intensely communal — txokos (food societies), neighborhood festivals, fierce pride in welcoming those who commit. Beach 20 min by metro. Green hills surround the city.`,
     religion: [
         { name: 'Irreligious', pct: 58, color: '#22d3ee' }, { name: 'Catholic', pct: 35, color: '#818cf8' },
@@ -544,7 +544,7 @@ bilbao: {
 
 chania: {
     lat: 35.5138, lng: 24.0180, flag: '🇬🇷', city: 'Chania', country: 'Crete, Greece', rank: 12,
-    population: '55K', familyCost: '$2,600/mo', summerHigh: '29°C', winterLow: '9°C', beach: 'In city',
+    population: '55K', familyCost: '$2,600/mo', summerHigh: '84°F', winterLow: '48°F', beach: 'In city',
     overview: `The romantic pick. 55K wrapped around a Venetian harbor with White Mountains behind. Filoxenia — "love of strangers" — is a genuine cultural value. Cretans are fiercely hospitable. Apokoronas villages offer traditional stone-house living.\n\nTrade-offs: island (no trains to mainland), hot dry summers, Greek bureaucracy is legendary.`,
     religion: [
         { name: 'Greek Orthodox', pct: 75, color: '#818cf8' }, { name: 'Irreligious', pct: 15, color: '#22d3ee' },
@@ -569,7 +569,7 @@ chania: {
 
 valencia: {
     lat: 39.4699, lng: -0.3763, flag: '🇪🇸', city: 'Valencia', country: 'Spain', rank: 13,
-    population: '800K', familyCost: '$2,900/mo', summerHigh: '30°C', winterLow: '7°C', beach: 'In city',
+    population: '800K', familyCost: '$2,900/mo', summerHigh: '86°F', winterLow: '45°F', beach: 'In city',
     overview: `A mid-size city with the Turia — a former riverbed converted into a 9km park through the entire city. Barrio culture means tight-knit neighborhoods. Benimaclet is a village within the city.\n\nBest cycling infrastructure in Spain. Mediterranean climate. Fallas festivals are deeply inclusive.\n\nRisk: Valencia is growing fast as a DN hub. Rents rising.`,
     religion: [
         { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 38, color: '#818cf8' },
@@ -577,7 +577,7 @@ valencia: {
         { name: 'Protestant', pct: 1, color: '#fbbf24' }
     ],
     pros: ['Turia park — 9km green corridor','Benimaclet — village within a city','Best cycling infrastructure in Spain','Warm barrio culture, walkable','Fallas festivals — deeply inclusive','City of Arts and Sciences','Church planting opportunity'],
-    cons: ['Larger than ideal (800K)','Gentrification risk — DN hub rent pressure','Hot summers (35°C+)','Spain citizenship = US renunciation','Tourist pressure in some areas'],
+    cons: ['Larger than ideal (800K)','Gentrification risk — DN hub rent pressure','Hot summers (95°F+)','Spain citizenship = US renunciation','Tourist pressure in some areas'],
     costs: [{ label: '2-Bedroom Apartment', value: '$900–1,300' },{ label: 'Groceries (family)', value: '$400–500' },{ label: 'Public Transit', value: '$40' },{ label: 'Dining Out (meal for 2)', value: '$30–45' }],
     familyLife: `Turia is a 9km playground, garden, and sports complex. Spanish culture is intensely family-oriented. Public schools free, increasingly bilingual. Work-life balance is cultural.`,
     visaDetails: spainVisa,
@@ -587,7 +587,7 @@ valencia: {
 
 san_sebastian: {
     lat: 43.3183, lng: -1.9812, flag: '🇪🇸', city: 'San Sebastián', country: 'Basque Country, Spain', rank: 14,
-    population: '188K', familyCost: '$4,400/mo', summerHigh: '24°C', winterLow: '4°C', beach: 'In city',
+    population: '188K', familyCost: '$4,400/mo', summerHigh: '75°F', winterLow: '39°F', beach: 'In city',
     overview: `By many measures the most beautiful city in Spain. Three beaches between forested headlands, unmatched food scene per capita. Basque identity is exactly the Atlantic/Celtic depth you described. Txokos and pintxos culture builds deep community. 30%+ residents born outside Spain. The dream lifestyle pick if budget allows.`,
     religion: [
         { name: 'Irreligious', pct: 60, color: '#22d3ee' }, { name: 'Catholic', pct: 33, color: '#818cf8' },
@@ -605,7 +605,7 @@ san_sebastian: {
 
 toulouse: {
     lat: 43.6047, lng: 1.4442, flag: '🇫🇷', city: 'Toulouse', country: 'France', rank: 15,
-    population: '500K', familyCost: '$3,100/mo', summerHigh: '27°C', winterLow: '2°C', beach: '2+ hours',
+    population: '500K', familyCost: '$3,100/mo', summerHigh: '81°F', winterLow: '36°F', beach: '2+ hours',
     overview: `"La Ville Rose" on the Garonne — one of France's warmest cities in both climate and people. ~500K with strong neighborhood identity, incredible markets, relaxed pace. Cheaper than Paris or Lyon. Your brother in Paris is a TGV ride away.`,
     religion: [
         { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 25, color: '#818cf8' },
@@ -623,7 +623,7 @@ toulouse: {
 
 ljubljana: {
     lat: 46.0569, lng: 14.5058, flag: '🇸🇮', city: 'Ljubljana', country: 'Slovenia', rank: 16,
-    population: '280K', familyCost: '$2,500/mo', summerHigh: '26°C', winterLow: '-2°C', beach: '1 hr drive',
+    population: '280K', familyCost: '$2,500/mo', summerHigh: '79°F', winterLow: '28°F', beach: '1 hr drive',
     overview: `The surprise pick. ~280K with the Ljubljanica River running through a car-free pedestrian center. One of Europe's greenest capitals. Incredibly safe. Alps, forests, coast all within an hour.\n\nSignificant church-planting opportunity — very secular, post-communist with genuine spiritual openness.`,
     religion: [
         { name: 'Catholic', pct: 45, color: '#818cf8' }, { name: 'Irreligious', pct: 42, color: '#22d3ee' },
@@ -648,7 +648,7 @@ ljubljana: {
 
 plovdiv: {
     lat: 42.1354, lng: 24.7453, flag: '🇧🇬', city: 'Plovdiv', country: 'Bulgaria', rank: 17,
-    population: '330K', familyCost: '$2,400/mo', summerHigh: '34°C', winterLow: '-3°C', beach: '2.5 hr drive',
+    population: '330K', familyCost: '$2,400/mo', summerHigh: '93°F', winterLow: '27°F', beach: '2.5 hr drive',
     overview: `Europe's oldest continuously inhabited city — 8,000 years. 330K people spread across seven hills, with a Roman amphitheater still hosting concerts in the old town. European Capital of Culture 2019.\n\nKapana (creative district) is the beating heart — tiny streets packed with galleries, cafés, and craft shops. The old town is Ottoman, Bulgarian Revival, and Roman layered on top of each other. Bulgaria has a flat 10% income tax — one of the lowest in Europe. Incredibly affordable.`,
     religion: [
         { name: 'Orthodox', pct: 63, color: '#f97316' }, { name: 'Muslim', pct: 10, color: '#6ee7b7' },
@@ -673,7 +673,7 @@ plovdiv: {
 
 rijeka: {
     lat: 45.3271, lng: 14.4422, flag: '🇭🇷', city: 'Rijeka', country: 'Croatia', rank: 18,
-    population: '130K', familyCost: '$2,300/mo', summerHigh: '28°C', winterLow: '5°C', beach: '15 min',
+    population: '130K', familyCost: '$2,300/mo', summerHigh: '82°F', winterLow: '41°F', beach: '15 min',
     overview: `Croatia's third-largest city and its most liberal. A gritty, authentic Adriatic port with Italian, Hungarian, and Austrian cultural layers. European Capital of Culture 2020.\n\nKorzo is where the city lives — kids running, coffee lingering, evening promenades. Opatija Riviera 15 min away. Kvarner Gulf islands are day trips. DN visa is tax-free on foreign income year one.`,
     religion: [
         { name: 'Irreligious', pct: 55, color: '#22d3ee' }, { name: 'Catholic', pct: 35, color: '#818cf8' },
@@ -698,7 +698,7 @@ rijeka: {
 
 lyon: {
     lat: 45.764, lng: 4.8357, flag: '🇫🇷', city: 'Lyon', country: 'France', rank: 19,
-    population: '516K', familyCost: '$3,500/mo', summerHigh: '27°C', winterLow: '0°C', beach: '3+ hours',
+    population: '516K', familyCost: '$3,500/mo', summerHigh: '81°F', winterLow: '32°F', beach: '3+ hours',
     overview: `Two rivers (Rhône and Saône) converge here. Distinct, walkable neighborhoods. France's food capital — bouchon culture means regulars treated like family. Excellent metro/tram/bike-share. More diverse and cosmopolitan than Toulouse. Progressive, family-friendly, deep civic pride.`,
     religion: [
         { name: 'Irreligious', pct: 50, color: '#22d3ee' }, { name: 'Catholic', pct: 28, color: '#818cf8' },
@@ -716,7 +716,7 @@ lyon: {
 
 marseille: {
     lat: 43.2965, lng: 5.3698, flag: '🇫🇷', city: 'Marseille', country: 'France', rank: 10,
-    population: '870K', familyCost: '$3,000/mo', summerHigh: '30°C', winterLow: '3°C', beach: 'In city (Calanques, Prado)',
+    population: '870K', familyCost: '$3,000/mo', summerHigh: '86°F', winterLow: '37°F', beach: 'In city (Calanques, Prado)',
     overview: `France's second city, 870K people, and its most diverse by a mile. North African, West African, Comorian, Armenian, and Middle Eastern communities layered over 2,600 years of Mediterranean port history. The Vieux-Port is the soul of the city — fishermen selling the morning catch at the same quay since the Greeks founded Massalia.\n\nThis is where the church planting need is deepest in France. The largest Muslim population in Western Europe lives here — and the evangelical church planting movement among immigrant communities is one of the most active in Europe. It's rough, real, and raw. Calanques National Park (limestone cliffs plunging into turquoise water) is literally in the city limits. Dramatically cheaper than Paris or Lyon.`,
     religion: [
         { name: 'Muslim', pct: 25, color: '#6ee7b7' }, { name: 'Catholic', pct: 30, color: '#818cf8' },
@@ -734,7 +734,7 @@ marseille: {
 
 turin: {
     lat: 45.0703, lng: 7.6869, flag: '🇮🇹', city: 'Turin', country: 'Piedmont, Italy', rank: 20,
-    population: '870K', familyCost: '$2,400/mo', summerHigh: '28°C', winterLow: '0°C', beach: '2 hr drive',
+    population: '870K', familyCost: '$2,400/mo', summerHigh: '82°F', winterLow: '32°F', beach: '2 hr drive',
     overview: `Italy's most underrated major city. 18 km of arcaded walkways. Alps visible from almost everywhere. Italy's coffee and chocolate capital. Porta Palazzo is Europe's largest open-air market. Surprisingly diverse. Not a tourist city. Dramatically cheaper than Milan (90 min by train).`,
     religion: [
         { name: 'Irreligious', pct: 42, color: '#22d3ee' }, { name: 'Catholic', pct: 40, color: '#818cf8' },
@@ -1034,10 +1034,10 @@ function openDrawer() {
 
 const laData = {
     flag: '🇺🇸', city: 'Los Angeles', country: 'California, USA', population: '3.9M',
-    familyCost: '$6,200/mo', summerHigh: '29°C', winterLow: '9°C', beach: 'In city',
+    familyCost: '$4,000/mo', summerHigh: '84°F', winterLow: '48°F', beach: 'In city',
     taxMonthly: '$5,100/mo',
     taxNote: 'Federal progressive 10–37% (~22% effective on $100K) + California state 9.3% + FICA 7.65%. Total effective ~39%. No FEIE since you live domestically.',
-    overview: `Your home base. 3.9M people, sprawling, diverse, expensive. You know it — the traffic, the tacos, the sunshine, the cost. This is your comparison baseline.\n\nYou currently spend ~$6,200/mo as a family of 4. Rent alone is $3,000. You make $170K and take home about $8,000/mo (biweekly $4K checks, two triple months).`,
+    overview: `Your home base. 3.9M people, sprawling, diverse, expensive. You know it — the traffic, the tacos, the sunshine, the cost. This is your comparison baseline.\n\nAverage family of 4 cost is ~$4,000/mo. Rent alone is $3,000. You make $170K and take home about $8,000/mo (biweekly $4K checks, two triple months).`,
     religion: [
         { name: 'Catholic', pct: 32, color: '#818cf8' }, { name: 'Irreligious', pct: 28, color: '#22d3ee' },
         { name: 'Protestant', pct: 20, color: '#fbbf24' }, { name: 'Other Christian', pct: 8, color: '#f472b6' },
@@ -1045,7 +1045,7 @@ const laData = {
         { name: 'Other', pct: 6, color: '#94a3b8' }
     ],
     pros: ['You know it — no adjustment period','Diverse — your family fits in','Sunshine year-round','Job market strong','Family and friends nearby','English','Beach in the city'],
-    cons: ['$6,200/mo family cost','Traffic','Homelessness crisis','Public schools vary wildly','Healthcare expensive','Not walkable — car required'],
+    cons: ['$4,000/mo family cost — most expensive on the list','Traffic','Homelessness crisis','Public schools vary wildly','Healthcare expensive','Not walkable — car required'],
     costs: [{ label: '2-Bedroom Apartment', value: '$2,500–3,500' },{ label: 'Groceries (family)', value: '$500–700' },{ label: 'Utilities', value: '$200–300' },{ label: 'Car/Gas/Insurance', value: '$500–700' },{ label: 'Health Insurance', value: '$400–600' },{ label: 'Dining Out (meal for 2)', value: '$40–70' }],
     familyLife: `Beach weekends, hiking in Griffith Park, Korean BBQ in Koreatown, tacos everywhere. Your kids grow up hearing five languages on every block. But you drive everywhere and pay for everything.`,
     visaDetails: [
