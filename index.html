@@ -50,23 +50,30 @@
             background: rgba(15,15,20,0.95); backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-        .panel-close {
-            position: absolute; top: 20px; right: 24px; width: 32px; height: 32px; border: none;
-            background: rgba(255,255,255,0.06); border-radius: 8px; color: rgba(255,255,255,0.5);
-            font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        .panel-header-controls {
+            position: absolute; top: 20px; right: 24px; display: flex; gap: 6px;
         }
-        .panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .panel-ctrl-btn {
+            width: 32px; height: 32px; border: none;
+            background: rgba(255,255,255,0.06); border-radius: 50%; color: rgba(255,255,255,0.5);
+            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .panel-ctrl-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .panel-ctrl-btn:disabled { opacity: 0.2; cursor: default; }
+        .panel-ctrl-btn:disabled:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
         .panel-flag { font-size: 36px; margin-bottom: 8px; }
         .panel-city { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
         .panel-subtitle-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
         .panel-country-text { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.4); }
         .panel-pop-pill { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 2px 10px; border-radius: 12px; }
-        .panel-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-        .panel-nav-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 22px; cursor: pointer; transition: color 0.2s; padding: 4px 8px; line-height: 1; }
-        .panel-nav-btn:hover { color: #a5b4fc; }
-        .panel-nav-btn:disabled { opacity: 0.15; cursor: default; }
-        .panel-nav-btn:disabled:hover { color: rgba(255,255,255,0.35); }
-        .panel-nav-label { font-size: 11px; color: rgba(255,255,255,0.25); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .la-btn {
+            position: fixed; bottom: 24px; right: 24px; z-index: 999;
+            background: rgba(15,15,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 18px;
+            color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+        .la-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
         .panel-rank-badge {
             display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 12px;
             background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
@@ -252,11 +259,17 @@
     Compare All
 </button>
 
+<button class="la-btn" id="laBtn">🇺🇸 Compare with LA</button>
+
 <div id="map"></div>
 
 <div class="info-panel" id="infoPanel">
     <div class="panel-header">
-        <button class="panel-close" id="panelClose">×</button>
+        <div class="panel-header-controls">
+            <button class="panel-ctrl-btn" id="panelPrev">&#8249;</button>
+            <button class="panel-ctrl-btn" id="panelNext">&#8250;</button>
+            <button class="panel-ctrl-btn" id="panelClose">×</button>
+        </div>
         <div class="panel-flag" id="panelFlag"></div>
         <div class="panel-city" id="panelCity"></div>
         <div class="panel-subtitle-row">
@@ -264,11 +277,6 @@
             <span class="panel-pop-pill" id="panelPop"></span>
         </div>
         <div class="panel-rank-badge" id="panelRank"></div>
-        <div class="panel-nav">
-            <button class="panel-nav-btn" id="panelPrev">&#8592;</button>
-            <span class="panel-nav-label" id="panelNavLabel"></span>
-            <button class="panel-nav-btn" id="panelNext">&#8594;</button>
-        </div>
     </div>
     <div class="panel-body" id="panelBody"></div>
 </div>
@@ -861,7 +869,6 @@ function openPanel(key) {
     const nextBtn = document.getElementById('panelNext');
     prevBtn.disabled = idx <= 0;
     nextBtn.disabled = idx >= sortedKeys.length - 1;
-    document.getElementById('panelNavLabel').textContent = `${idx + 1} of ${sortedKeys.length}`;
     prevBtn.onclick = () => { if (idx > 0) { const k = sortedKeys[idx - 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
     nextBtn.onclick = () => { if (idx < sortedKeys.length - 1) { const k = sortedKeys[idx + 1]; activateMarker(markers[k]); map.panTo([locations[k].lat, locations[k].lng]); openPanel(k); } };
 
@@ -1024,6 +1031,97 @@ function openDrawer() {
     drawer.classList.add('open');
     overlay.classList.add('visible');
 }
+
+const laData = {
+    flag: '🇺🇸', city: 'Los Angeles', country: 'California, USA', population: '3.9M',
+    familyCost: '$6,200/mo', summerHigh: '29°C', winterLow: '9°C', beach: 'In city',
+    taxMonthly: '$5,100/mo',
+    taxNote: 'Federal progressive 10–37% (~22% effective on $100K) + California state 9.3% + FICA 7.65%. Total effective ~39%. No FEIE since you live domestically.',
+    overview: `Your home base. 3.9M people, sprawling, diverse, expensive. You know it — the traffic, the tacos, the sunshine, the cost. This is your comparison baseline.\n\nYou currently spend ~$6,200/mo as a family of 4. Rent alone is $3,000. You make $170K and take home about $8,000/mo (biweekly $4K checks, two triple months).`,
+    religion: [
+        { name: 'Catholic', pct: 32, color: '#818cf8' }, { name: 'Irreligious', pct: 28, color: '#22d3ee' },
+        { name: 'Protestant', pct: 20, color: '#fbbf24' }, { name: 'Other Christian', pct: 8, color: '#f472b6' },
+        { name: 'Muslim', pct: 3, color: '#6ee7b7' }, { name: 'Jewish', pct: 3, color: '#f97316' },
+        { name: 'Other', pct: 6, color: '#94a3b8' }
+    ],
+    pros: ['You know it — no adjustment period','Diverse — your family fits in','Sunshine year-round','Job market strong','Family and friends nearby','English','Beach in the city'],
+    cons: ['$6,200/mo family cost','Traffic','Homelessness crisis','Public schools vary wildly','Healthcare expensive','Not walkable — car required'],
+    costs: [{ label: '2-Bedroom Apartment', value: '$2,500–3,500' },{ label: 'Groceries (family)', value: '$500–700' },{ label: 'Utilities', value: '$200–300' },{ label: 'Car/Gas/Insurance', value: '$500–700' },{ label: 'Health Insurance', value: '$400–600' },{ label: 'Dining Out (meal for 2)', value: '$40–70' }],
+    familyLife: `Beach weekends, hiking in Griffith Park, Korean BBQ in Koreatown, tacos everywhere. Your kids grow up hearing five languages on every block. But you drive everywhere and pay for everything.`,
+    visaDetails: [
+        { label: 'Remote Work Visa', ok: true, detail: 'You\'re a citizen — no visa needed.' },
+        { label: 'Spouse Can Work', ok: true, detail: 'No restrictions.' },
+        { label: 'In-Country Employment', ok: true, detail: 'No restrictions.' },
+        { label: 'Permanent Residency', ok: true, detail: 'You\'re a citizen.' },
+        { label: 'Path to Citizenship', ok: true, detail: 'You\'re a citizen.' },
+        { label: 'Dual Citizenship', ok: true, detail: 'USA allows dual nationality.' }
+    ]
+};
+
+document.getElementById('laBtn').addEventListener('click', () => {
+    closeDrawer();
+    const loc = laData;
+    document.getElementById('panelFlag').textContent = loc.flag;
+    document.getElementById('panelCity').textContent = loc.city;
+    document.getElementById('panelCountry').textContent = loc.country;
+    document.getElementById('panelPop').textContent = loc.population;
+    document.getElementById('panelRank').textContent = 'Home Base';
+
+    const prevBtn = document.getElementById('panelPrev');
+    const nextBtn = document.getElementById('panelNext');
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+
+    if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
+
+    const topReligions = loc.religion.slice(0, 2).map(r => `${r.name} ${r.pct}%`).join(', ');
+    const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
+    const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
+    const fam6 = '$' + Math.round(baseCost * 1.4).toLocaleString() + '/mo';
+
+    const stats = [
+        { value: loc.taxMonthly, label: 'Take-Home on $100K' },
+        { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
+        { value: loc.summerHigh, label: 'Summer High' },
+        { value: loc.winterLow, label: 'Winter Low' },
+        { value: loc.beach, label: 'Beach / Coast' },
+        { value: topReligions, label: 'Top Religions', small: true }
+    ];
+
+    document.getElementById('panelBody').innerHTML = `
+        <div class="section"><div class="section-label">At a Glance</div>
+            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value${s.small ? ' stat-value-sm' : ''}">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">If You Make $100K USD</div>
+            <div class="tax-callout">
+                <div class="tax-amount">${loc.taxMonthly}</div>
+                <div class="tax-subtitle">Estimated monthly take-home after federal + state taxes</div>
+                <div class="tax-note">${loc.taxNote}</div>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Overview</div><div class="section-text">${loc.overview.replace(/\n/g,'<br>')}</div></div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Cost of Living</div>
+            <div class="cost-rows">${loc.costs.map(c => `<div class="cost-row"><span class="cost-row-label">${c.label}</span><span class="cost-row-value">${c.value}</span></div>`).join('')}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Religious Demographics</div>
+            <div class="religion-bars">${loc.religion.map(r => `<div class="religion-row"><span class="religion-name">${r.name}</span><div class="religion-bar-track"><div class="religion-bar-fill" style="width:${r.pct}%;background:${r.color};"></div></div><span class="religion-pct">${r.pct}%</span></div>`).join('')}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Pros & Cons</div>
+            <div class="pros-cons">
+                <div class="pros-cons-column pros"><h4>Pros</h4><ul>${loc.pros.map(p => `<li>${p}</li>`).join('')}</ul></div>
+                <div class="pros-cons-column cons"><h4>Cons</h4><ul>${loc.cons.map(c => `<li>${c}</li>`).join('')}</ul></div>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section"><div class="section-label">Family Life</div><div class="section-text">${loc.familyLife}</div></div>
+    `;
+    panel.classList.add('open');
+});
 </script>
 </body>
 </html>
