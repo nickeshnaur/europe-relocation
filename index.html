@@ -875,6 +875,12 @@ function closePanel() {
     }
 }
 
+function renderReligionBar(religion) {
+    const bar = `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:8px;">${religion.map(r => `<div style="width:${r.pct}%;background:${r.color};height:100%;"></div>`).join('')}</div>`;
+    const legend = `<div style="display:flex;flex-wrap:wrap;gap:6px 10px;">${religion.map(r => `<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.45);"><span style="width:6px;height:6px;border-radius:50%;background:${r.color};flex-shrink:0;"></span>${r.name} ${r.pct}%</span>`).join('')}</div>`;
+    return bar + legend;
+}
+
 function visaIcon(ok) {
     if (ok === true) return '<span class="visa-check yes">✓</span>';
     if (ok === false) return '<span class="visa-check no">✗</span>';
@@ -902,8 +908,6 @@ function openPanel(key) {
 
     if (galleryInterval) { clearInterval(galleryInterval); galleryInterval = null; }
 
-    const topReligions = loc.religion.slice(0, 2).map(r => `${r.name} ${r.pct}%`).join(', ');
-
     const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
     const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
     const fam6 = '$' + Math.round(baseCost * 1.4).toLocaleString() + '/mo';
@@ -913,13 +917,15 @@ function openPanel(key) {
         { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
         { value: loc.summerHigh, label: 'Summer High' },
         { value: loc.winterLow, label: 'Winter Low' },
-        { value: loc.beach, label: 'Beach / Coast' },
-        { value: topReligions, label: 'Top Religions', small: true }
+        { value: loc.beach, label: 'Beach / Coast' }
     ];
+
+    const religionBar = renderReligionBar(loc.religion);
 
     document.getElementById('panelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
-            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value${s.small ? ' stat-value-sm' : ''}">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            <div class="stat-card" style="margin-top:10px;">${religionBar}</div>
             <div class="gallery" id="cityGallery" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:13px;">Loading photos…</div>
         </div>
         <div class="divider"></div>
@@ -1005,7 +1011,7 @@ document.getElementById('compareBtn').addEventListener('click', openDrawer);
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 overlay.addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel(); closeDrawer(); laPanel.classList.remove('open'); } });
-map.on('click', () => { closePanel(); closeDrawer(); });
+map.on('click', () => { closePanel(); closeDrawer(); laPanel.classList.remove('open'); });
 
 function closeDrawer() {
     drawer.classList.remove('open');
@@ -1090,7 +1096,6 @@ const laPanel = document.getElementById('laPanel');
 
 function populateLAPanel() {
     const loc = laData;
-    const topReligions = loc.religion.slice(0, 2).map(r => `${r.name} ${r.pct}%`).join(', ');
     const baseCost = parseFloat(loc.familyCost.replace(/[^0-9.]/g, ''));
     const fam5 = '$' + Math.round(baseCost * 1.2).toLocaleString() + '/mo';
     const fam6 = '$' + Math.round(baseCost * 1.4).toLocaleString() + '/mo';
@@ -1100,13 +1105,15 @@ function populateLAPanel() {
         { value: loc.familyCost, label: 'Family of 4', sub: `5: ${fam5} · 6: ${fam6}` },
         { value: loc.summerHigh, label: 'Summer High' },
         { value: loc.winterLow, label: 'Winter Low' },
-        { value: loc.beach, label: 'Beach / Coast' },
-        { value: topReligions, label: 'Top Religions', small: true }
+        { value: loc.beach, label: 'Beach / Coast' }
     ];
+
+    const religionBar = renderReligionBar(loc.religion);
 
     document.getElementById('laPanelBody').innerHTML = `
         <div class="section"><div class="section-label">At a Glance</div>
-            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value${s.small ? ' stat-value-sm' : ''}">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            <div class="stats-grid">${stats.map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>${s.sub ? `<div class="stat-sub">${s.sub}</div>` : ''}</div>`).join('')}</div>
+            <div class="stat-card" style="margin-top:10px;">${religionBar}</div>
         </div>
         <div class="divider"></div>
         <div class="section"><div class="section-label">If You Make $100K USD</div>
